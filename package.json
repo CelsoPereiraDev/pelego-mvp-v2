@@ -1,0 +1,15 @@
+{
+  "name": "pelego-mvp",
+  "version": "1.0.0",
+  "description": "Pelego MVP - Football/Soccer League Management System",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+    "backend": "cd back-pelego-mvp && npm run dev",
+    "frontend": "cd front-pelego-mvp && npm run dev",
+    "install-all": "npm install && cd back-pelego-mvp && npm install && cd ../front-pelego-mvp && npm install && cd .."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

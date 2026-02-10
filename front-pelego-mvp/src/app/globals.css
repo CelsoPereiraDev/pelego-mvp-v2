@@ -1,0 +1,396 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ⚽ Pelego Football Design System - Light Mode (Default) */
+:root {
+  --foreground-rgb: 20, 20, 30;
+  --background-start-rgb: 248, 250, 252;
+  --background-end-rgb: 240, 245, 250;
+
+  /* Core Colors - Light Mode (Stadium inspired) */
+  --background: 210 25% 98%; /* Light stadium concrete */
+  --foreground: 220 20% 10%; /* Deep text */
+  --card: 0 0% 100%; /* Pure white cards */
+  --card-foreground: 220 20% 10%; /* Deep text */
+  --popover: 0 0% 100%; /* White popover */
+  --popover-foreground: 220 20% 10%; /* Deep text */
+
+  /* Football Primary - Vibrant green (pitch) */
+  --primary: 142 76% 36%; /* Rich grass green #16a34a */
+  --primary-foreground: 0 0% 100%; /* White text */
+  --primary-hover: 142 76% 28%; /* Deeper green on hover */
+  --primary-light: 142 76% 45%; /* Lighter green */
+
+  /* Secondary - Sky blue (jersey inspired) */
+  --secondary: 210 100% 96%; /* Very light blue */
+  --secondary-foreground: 217 91% 35%; /* Deep blue */
+  --secondary-accent: 217 91% 60%; /* Bright blue */
+
+  /* Muted - Stadium grays */
+  --muted: 210 20% 94%; /* Light concrete */
+  --muted-foreground: 215 15% 45%; /* Medium gray */
+
+  /* Accent - Golden yellow (trophy/medal) */
+  --accent: 45 93% 95%; /* Light gold */
+  --accent-foreground: 45 93% 35%; /* Deep gold */
+  --accent-gold: 45 93% 47%; /* Rich gold #d4af37 */
+
+  /* Football Field Colors */
+  --pitch-green: 142 76% 36%; /* Main pitch */
+  --pitch-dark: 142 76% 28%; /* Darker grass */
+  --pitch-light: 142 50% 45%; /* Lighter grass */
+  --line-white: 0 0% 98%; /* Field lines */
+  --line-shadow: 0 0% 85%; /* Line shadows */
+
+  /* Status Colors - Match results */
+  --destructive: 0 84% 60%; /* Red card / loss */
+  --destructive-foreground: 0 0% 100%;
+  --success: 142 76% 36%; /* Win green */
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%; /* Yellow card / draw */
+  --warning-foreground: 0 0% 100%;
+  --info: 217 91% 60%; /* Blue info */
+  --info-foreground: 0 0% 100%;
+
+  /* Performance Tiers */
+  --tier-legend: 45 93% 47%; /* Gold */
+  --tier-elite: 0 0% 85%; /* Silver */
+  --tier-common: 25 75% 47%; /* Bronze */
+  --tier-mvp: 280 100% 70%; /* Purple MVP */
+
+  /* Borders & Inputs */
+  --border: 215 15% 88%; /* Subtle border */
+  --input: 215 15% 88%; /* Input border */
+  --ring: 142 76% 36%; /* Green focus ring */
+
+  /* Match Statistics Colors */
+  --goal-indicator: 142 76% 36%; /* Green - goals scored */
+  --assist-indicator: 217 91% 60%; /* Blue - assists */
+  --own-goal-indicator: 0 84% 60%; /* Red - own goals */
+
+  /* Form State Colors */
+  --field-dirty: 38 92% 50%; /* Warning yellow for modified fields */
+  --field-valid: 142 76% 36%; /* Success green */
+  --field-invalid: 0 84% 60%; /* Error red */
+
+  /* Charts - Football spectrum */
+  --chart-1: 142 76% 36%; /* Green - goals */
+  --chart-2: 217 91% 60%; /* Blue - assists */
+  --chart-3: 45 93% 47%; /* Gold - points */
+  --chart-4: 0 84% 60%; /* Red - fouls */
+  --chart-5: 280 65% 60%; /* Purple - special */
+
+  /* Shadows - Stadium lighting */
+  --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.06);
+  --shadow: 0 4px 8px 0 rgb(0 0 0 / 0.08), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 8px 16px -2px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 16px 32px -4px rgb(0 0 0 / 0.12), 0 8px 16px -8px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 24px 48px -8px rgb(0 0 0 / 0.14), 0 12px 24px -12px rgb(0 0 0 / 0.12);
+  --shadow-glow: 0 0 20px rgb(22 163 74 / 0.3); /* Green glow */
+
+  --radius: 0.75rem; /* Slightly rounded */
+}
+
+/* ⚽ Dark Mode - Night Stadium theme */
+.dark {
+  --foreground-rgb: 250, 250, 255;
+  --background-start-rgb: 10, 15, 20;
+  --background-end-rgb: 15, 20, 25;
+
+  /* Core Colors - Dark Mode (Night stadium) */
+  --background: 220 25% 8%; /* Dark stadium */
+  --foreground: 210 20% 98%; /* Bright white */
+  --card: 220 20% 12%; /* Dark card */
+  --card-foreground: 210 20% 98%; /* Light text */
+  --popover: 220 20% 10%; /* Dark popover */
+  --popover-foreground: 210 20% 98%; /* Light text */
+
+  /* Football Primary - Vibrant green for dark */
+  --primary: 142 76% 45%; /* Brighter grass green */
+  --primary-foreground: 220 20% 10%; /* Dark text on green */
+  --primary-hover: 142 76% 55%; /* Lighter green hover */
+  --primary-light: 142 76% 50%;
+
+  /* Secondary - Night sky blue */
+  --secondary: 220 20% 18%; /* Dark blue gray */
+  --secondary-foreground: 210 100% 90%; /* Light blue */
+  --secondary-accent: 217 91% 70%; /* Bright blue */
+
+  /* Muted - Dark stadium concrete */
+  --muted: 220 15% 18%; /* Dark concrete */
+  --muted-foreground: 215 10% 65%; /* Medium gray */
+
+  /* Accent - Golden glow */
+  --accent: 45 93% 20%; /* Dark gold */
+  --accent-foreground: 45 93% 85%; /* Light gold */
+  --accent-gold: 45 93% 60%; /* Bright gold */
+
+  /* Football Field Colors - Night */
+  --pitch-green: 142 76% 40%; /* Night pitch */
+  --pitch-dark: 142 76% 30%; /* Darker grass */
+  --pitch-light: 142 60% 50%; /* Lighter grass */
+  --line-white: 0 0% 95%; /* Bright field lines */
+  --line-shadow: 0 0% 30%; /* Dark line shadows */
+
+  /* Status Colors - Night adjusted */
+  --destructive: 0 84% 65%; /* Bright red */
+  --destructive-foreground: 0 0% 98%;
+  --success: 142 76% 50%; /* Bright green */
+  --success-foreground: 220 20% 10%;
+  --warning: 38 92% 65%; /* Bright yellow */
+  --warning-foreground: 220 20% 10%;
+  --info: 217 91% 70%; /* Bright blue */
+  --info-foreground: 220 20% 10%;
+
+  /* Performance Tiers - Enhanced for dark */
+  --tier-legend: 45 93% 60%; /* Bright gold */
+  --tier-elite: 0 0% 75%; /* Bright silver */
+  --tier-common: 25 75% 55%; /* Bright bronze */
+  --tier-mvp: 280 100% 75%; /* Bright purple */
+
+  /* Borders & Inputs */
+  --border: 220 15% 25%; /* Visible border */
+  --input: 220 15% 25%; /* Input border */
+  --ring: 142 76% 50%; /* Bright green focus */
+
+  /* Match Statistics Colors - Dark Mode */
+  --goal-indicator: 142 76% 45%; /* Brighter green for dark */
+  --assist-indicator: 217 91% 65%; /* Brighter blue for dark */
+  --own-goal-indicator: 0 84% 65%; /* Brighter red for dark */
+
+  /* Form State Colors - Dark Mode */
+  --field-dirty: 38 92% 60%; /* Brighter yellow */
+  --field-valid: 142 76% 50%; /* Brighter green */
+  --field-invalid: 0 84% 65%; /* Brighter red */
+
+  /* Charts - Vibrant night mode */
+  --chart-1: 142 76% 55%; /* Bright green */
+  --chart-2: 217 91% 70%; /* Bright blue */
+  --chart-3: 45 93% 65%; /* Bright gold */
+  --chart-4: 0 84% 70%; /* Bright red */
+  --chart-5: 280 80% 70%; /* Bright purple */
+
+  /* Shadows - Stadium floodlights */
+  --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.4);
+  --shadow: 0 4px 8px 0 rgb(0 0 0 / 0.5), 0 2px 4px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 8px 16px -2px rgb(0 0 0 / 0.6), 0 4px 8px -4px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 16px 32px -4px rgb(0 0 0 / 0.7), 0 8px 16px -8px rgb(0 0 0 / 0.6);
+  --shadow-xl: 0 24px 48px -8px rgb(0 0 0 / 0.8), 0 12px 24px -12px rgb(0 0 0 / 0.7);
+  --shadow-glow: 0 0 24px rgb(22 163 74 / 0.4); /* Brighter green glow */
+}
+
+/* Base Styles */
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  font-family: var(--font-main), system-ui, -apple-system, sans-serif;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary-hover));
+}
+
+/* ⚽ Pelego Football Utilities */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Football-inspired gradients */
+  .bg-gradient-pitch {
+    background: linear-gradient(135deg, hsl(var(--pitch-green)) 0%, hsl(var(--pitch-dark)) 100%);
+  }
+
+  .bg-gradient-sky {
+    background: linear-gradient(180deg, hsl(217 91% 85%) 0%, hsl(217 91% 95%) 100%);
+  }
+
+  .bg-gradient-gold {
+    background: linear-gradient(135deg, hsl(45 93% 55%) 0%, hsl(45 93% 40%) 100%);
+  }
+
+  .bg-gradient-trophy {
+    background: linear-gradient(135deg, hsl(45 93% 65%) 0%, hsl(45 93% 45%) 50%, hsl(45 93% 55%) 100%);
+  }
+
+  .bg-gradient-field {
+    background: linear-gradient(180deg, hsl(var(--pitch-light)) 0%, hsl(var(--pitch-green)) 50%, hsl(var(--pitch-dark)) 100%);
+  }
+
+  .bg-gradient-stadium {
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+  }
+
+  /* Glass morphism - Stadium style */
+  .glass {
+    background: hsla(var(--background) / 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .glass-pitch {
+    background: hsla(var(--pitch-green) / 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--pitch-green) / 0.3);
+  }
+
+  /* Football shadows */
+  .shadow-soft {
+    box-shadow: 0 4px 12px -2px hsl(var(--primary) / 0.12);
+  }
+
+  .shadow-pitch {
+    box-shadow: 0 8px 24px 0 hsl(var(--pitch-green) / 0.2);
+  }
+
+  .shadow-gold {
+    box-shadow: 0 8px 24px 0 hsl(var(--accent-gold) / 0.3);
+  }
+
+  .shadow-stadium {
+    box-shadow:
+      0 4px 8px -2px rgb(0 0 0 / 0.1),
+      0 12px 24px -4px rgb(0 0 0 / 0.08);
+  }
+
+  /* Performance tier shadows */
+  /* .shadow-tier-gold {
+    box-shadow: 0 0 20px hsl(var(--tier-legend) / 0.4);
+  }
+
+  .shadow-tier-silver {
+    box-shadow: 0 0 16px hsl(var(--tier-elite) / 0.3);
+  }
+
+  .shadow-tier-bronze {
+    box-shadow: 0 0 14px hsl(var(--tier-common) / 0.25);
+  } */
+
+  /* Smooth transitions - Match paced */
+  .transition-fast {
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-base {
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-smooth {
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Field lines effect */
+  .field-lines {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 48px,
+        hsl(var(--line-white) / 0.05) 48px,
+        hsl(var(--line-white) / 0.05) 52px
+      );
+  }
+
+  /* Pitch stripes */
+  .pitch-stripes {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--pitch-green)) 0%,
+      hsl(var(--pitch-green)) 48%,
+      hsl(var(--pitch-dark)) 48%,
+      hsl(var(--pitch-dark)) 52%,
+      hsl(var(--pitch-green)) 52%,
+      hsl(var(--pitch-green)) 100%
+    );
+    background-size: 100px 100%;
+  }
+
+  /* Text gradients */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(45 93% 55%) 0%, hsl(45 93% 35%) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-pitch {
+    background: linear-gradient(135deg, hsl(var(--pitch-light)) 0%, hsl(var(--pitch-dark)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Stadium floodlight glow */
+  .glow-pitch {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Animation utilities */
+  .animate-goal {
+    animation: goalPulse 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-trophy {
+    animation: trophyShine 1200ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+/* Football Animations */
+@keyframes goalPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(22, 163, 74, 0);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(22, 163, 74, 0.4);
+  }
+}
+
+@keyframes trophyShine {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-goal,
+  .animate-trophy {
+    animation: none;
+  }
+
+  .transition-fast,
+  .transition-base,
+  .transition-smooth {
+    transition: none;
+  }
+}

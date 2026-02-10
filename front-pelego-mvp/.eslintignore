@@ -1,0 +1,5 @@
+/*.js
+**/*.js
+node_modules
+.next
+/src/stories

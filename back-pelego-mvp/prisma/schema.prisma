@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id                    String                  @id @default(uuid())
+  name                  String
+  country               String?
+  image                 String?
+  position              String
+  overall               String
+  isChampion            Boolean                 @default(false)
+  monthChampion         Boolean                 @default(false)
+  monthStriker          Boolean                 @default(false)
+  monthBestDefender     Boolean                 @default(false)
+  monthTopPointer       Boolean                 @default(false)
+  monthTopAssist        Boolean                 @default(false)
+  monthLVP              Boolean                 @default(false)
+  monthBestOfPosition   Boolean?                @default(false)
+  monthIndividualPrizes MonthIndividualPrizes[]
+  yearIndividualPrizes  YearIndividualPrizes[]
+  goals                 Goal[]                  @relation("PlayerGoals")
+  ownGoals              Goal[]                  @relation("OwnGoalPlayerGoals")
+  assists               Assist[]                @relation("PlayerAssists")
+  teams                 TeamMember[]
+  team                  String?
+  scores                PlayerScore[]
+}
+
+// model MonthIndividualPrizes {
+//   id                  String         @id @default(uuid())
+//   playerId            String
+//   date                DateTime
+//   championTimes       Int            @default(0)
+//   monthBestOfPosition Boolean        @default(false)
+//   monthLVP            Boolean        @default(false)
+//   monthStriker        Boolean?       @default(false)
+//   monthTopPointer     Boolean        @default(false)
+//   monthChampion       Boolean?       @default(false)
+//   monthBestDefender   Boolean?       @default(false)
+//   monthBestAssist     Boolean?       @default(false)
+//   player              Player         @relation(fields: [playerId], references: [id])
+//   championDates       ChampionDate[] // Relação 1-N com ChampionDate
+//   @@unique([playerId, date]) // Define um índice único composto
+// }
+
+model MonthIndividualPrizes {
+  id            String   @id @default(uuid())
+  playerId      String
+  date          DateTime
+  championTimes Int      @default(0)
+
+  monthBestOfPosition   MonthPrizeDetails? @relation("BestOfPositionDetails", fields: [monthBestOfPositionId], references: [id])
+  monthBestOfPositionId String?            @unique
+
+  monthLVP   MonthPrizeDetails? @relation("LVPDetails", fields: [monthLVPId], references: [id])
+  monthLVPId String?            @unique
+
+  monthStriker   MonthPrizeDetails? @relation("StrikerDetails", fields: [monthStrikerId], references: [id])
+  monthStrikerId String?            @unique
+
+  monthTopPointer   MonthPrizeDetails? @relation("TopPointerDetails", fields: [monthTopPointerId], references: [id])
+  monthTopPointerId String?            @unique
+
+  monthChampion   MonthPrizeDetails? @relation("ChampionDetails", fields: [monthChampionId], references: [id])
+  monthChampionId String?            @unique
+
+  monthBestDefender   MonthPrizeDetails? @relation("BestDefenderDetails", fields: [monthBestDefenderId], references: [id])
+  monthBestDefenderId String?            @unique
+
+  monthBestAssist   MonthPrizeDetails? @relation("BestAssistDetails", fields: [monthBestAssistId], references: [id])
+  monthBestAssistId String?            @unique
+
+  player        Player         @relation(fields: [playerId], references: [id])
+  championDates ChampionDate[] // Relação 1-N com ChampionDate
+
+  @@unique([playerId, date]) // Define um índice único composto
+}
+
+model MonthPrizeDetails {
+  id         String  @id @default(uuid())
+  isAchieved Boolean @default(false)
+  count      Int     @default(0)
+  ranking    Int?
+  position   String?
+
+  monthIndividualPrize MonthIndividualPrizes? @relation("BestOfPositionDetails")
+  monthLVP             MonthIndividualPrizes? @relation("LVPDetails")
+  monthStriker         MonthIndividualPrizes? @relation("StrikerDetails")
+  monthTopPointer      MonthIndividualPrizes? @relation("TopPointerDetails")
+  monthChampion        MonthIndividualPrizes? @relation("ChampionDetails")
+  monthBestDefender    MonthIndividualPrizes? @relation("BestDefenderDetails")
+  monthBestAssist      MonthIndividualPrizes? @relation("BestAssistDetails")
+}
+
+model ChampionDate {
+  id                     String                @id @default(uuid())
+  monthIndividualPrizeId String
+  date                   DateTime
+  monthIndividualPrize   MonthIndividualPrizes @relation(fields: [monthIndividualPrizeId], references: [id])
+}
+
+model YearIndividualPrizes {
+  id                 String   @id @default(uuid())
+  playerId           String
+  year               DateTime
+  championOfTheWeek  Int      @default(0)
+  yearBestOfPosition Boolean  @default(false)
+  yearLVP            Boolean  @default(false)
+  yearStriker        Boolean? @default(false)
+  yearTopPointer     Boolean  @default(false)
+  yearChampion       Boolean? @default(false)
+  yearBestDefender   Boolean? @default(false)
+  yearBestAssist     Boolean? @default(false)
+  player             Player   @relation(fields: [playerId], references: [id])
+}
+
+model Week {
+  id    String   @id @default(uuid())
+  date  DateTime
+  teams Team[]
+}
+
+model PlayerScore {
+  id       String   @id @default(uuid())
+  playerId String
+  player   Player   @relation(fields: [playerId], references: [id])
+  points   Int
+  date     DateTime @default(now())
+}
+
+model Team {
+  id          String       @id @default(uuid())
+  weekId      String
+  week        Week         @relation(fields: [weekId], references: [id])
+  players     TeamMember[]
+  matchesHome Match[]      @relation("HomeMatches")
+  matchesAway Match[]      @relation("AwayMatches")
+  champion    Boolean      @default(false)
+  points      Int          @default(0)
+}
+
+model TeamMember {
+  id       String @id @default(uuid())
+  playerId String
+  teamId   String
+  player   Player @relation(fields: [playerId], references: [id])
+  team     Team   @relation(fields: [teamId], references: [id])
+
+  @@unique([playerId, teamId])
+}
+
+model Match {
+  id         String       @id @default(uuid())
+  date       DateTime
+  homeTeamId String
+  awayTeamId String
+  orderIndex Int?
+  homeTeam   Team         @relation("HomeMatches", fields: [homeTeamId], references: [id])
+  awayTeam   Team         @relation("AwayMatches", fields: [awayTeamId], references: [id])
+  result     MatchResult?
+  goals      Goal[]
+  assists    Assist[]
+}
+
+model MatchResult {
+  id        String @id @default(uuid())
+  matchId   String @unique
+  homeGoals Int
+  awayGoals Int
+  match     Match  @relation(fields: [matchId], references: [id])
+}
+
+model Goal {
+  id              String  @id @default(uuid())
+  matchId         String
+  playerId        String?
+  ownGoalPlayerId String?
+  goals           Int
+  match           Match   @relation(fields: [matchId], references: [id])
+  player          Player? @relation("PlayerGoals", fields: [playerId], references: [id])
+  ownGoalPlayer   Player? @relation("OwnGoalPlayerGoals", fields: [ownGoalPlayerId], references: [id])
+}
+
+model Assist {
+  id       String @id @default(uuid())
+  matchId  String
+  playerId String
+  assists  Int
+  match    Match  @relation(fields: [matchId], references: [id])
+  player   Player @relation("PlayerAssists", fields: [playerId], references: [id])
+}
