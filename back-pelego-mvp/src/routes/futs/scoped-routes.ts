@@ -420,7 +420,7 @@ export async function scopedRoutes(app: FastifyInstance) {
         : await dal.getWeeksByDate(futId, year);
 
       // Use existing calculation utility
-      const resume = calculateMonthResume(weeks as any, excludedIds);
+      const resume = calculateMonthResume(weeks, excludedIds);
       reply.status(200).send(resume);
     } catch (error) {
       console.error('Erro ao calcular resumo do mês:', error);

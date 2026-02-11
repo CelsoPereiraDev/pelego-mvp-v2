@@ -1,28 +1,8 @@
-import { CreateMatchDataRequested, CreateWeekAndMatchesRequest, CreateWeekAndMatchesResponse, GoalDetails, MatchResponse } from '@/types/match';
+import { CreateMatchDataRequested, CreateWeekAndMatchesRequest, CreateWeekAndMatchesResponse, MatchResponse } from '@/types/match';
 import { QueryRequest, getAuthHeaders, API_BASE_URL } from '@/utils/QueryRequest';
-
-export async function createMatch(futId: string, matchData: CreateMatchDataRequested) {
-  return new QueryRequest<MatchResponse, CreateMatchDataRequested>().post(`futs/${futId}/create_matches`, matchData);
-}
 
 export async function createMatches(futId: string, matchesData: { matches: CreateMatchDataRequested[] }) {
   return new QueryRequest<{ message: string; createdMatches: MatchResponse[] }, { matches: CreateMatchDataRequested[] }>().post(`futs/${futId}/create_matches`, matchesData);
-}
-
-export async function createGoals(futId: string, goals: GoalDetails[]) {
-  return new QueryRequest<GoalDetails[], GoalDetails[]>().post(`futs/${futId}/create_goals`, goals);
-}
-
-export async function getMatchById(futId: string, matchId: string) {
-  return new QueryRequest<MatchResponse>().get(`futs/${futId}/matches/${matchId}`);
-}
-
-export async function getMatches(futId: string) {
-  return new QueryRequest<Array<MatchResponse>>().get(`futs/${futId}/matches`);
-}
-
-export async function deleteMatch(futId: string, matchId: string) {
-  return new QueryRequest<{ message: string }>().delete(`futs/${futId}/delete_match/${matchId}`);
 }
 
 export async function createWeekWithTeams(futId: string, date: string, teams: string[][]) {

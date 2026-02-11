@@ -1,33 +1,52 @@
+'use client';
+
 import { MonthResumeProps } from '@/types/stats';
 import { useFut } from '@/contexts/FutContext';
-import useSWR from 'swr';
+import { useEffect, useState } from 'react';
 import { getMonthResume } from './resources';
 
 export function useMonthResume(
   year: string,
   month?: string,
   excludePlayerIds: string[] = [],
-  initialData?: MonthResumeProps
 ) {
   const { futId } = useFut();
+  const [monthResume, setMonthResume] = useState<MonthResumeProps | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const cacheKey = futId
-    ? (month
-      ? `/api/futs/${futId}/stats/month-resume/${year}/${month}?exclude=${excludePlayerIds.join(',')}`
-      : `/api/futs/${futId}/stats/month-resume/${year}?exclude=${excludePlayerIds.join(',')}`)
-    : null;
-
-  const { data, error, isLoading } = useSWR(
-    cacheKey,
-    () => getMonthResume(futId!, year, month, excludePlayerIds),
-    {
-      fallbackData: initialData,
+  useEffect(() => {
+    if (!futId || !year) {
+      setMonthResume(undefined);
+      setLoading(false);
+      return;
     }
-  );
+
+    let cancelled = false;
+    setLoading(true);
+
+    getMonthResume(futId, year, month, excludePlayerIds)
+      .then((data) => {
+        if (!cancelled) {
+          setMonthResume(data);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error('Failed to fetch month resume'));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [futId, year, month, excludePlayerIds.join(',')]);
 
   return {
-    monthResume: data,
-    isLoading,
+    monthResume,
+    isLoading: loading,
     error,
   };
 }

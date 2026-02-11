@@ -5,10 +5,6 @@
   "scripts": {
     "dev": "env-cmd -f .env tsx watch src/server.ts",
     "dev:test": "env-cmd -f .env.test tsx watch src/server.ts",
-    "migrate:dev": "env-cmd -f .env prisma migrate dev --schema=./prisma/schema.prisma",
-    "migrate:test": "env-cmd -f .env.test prisma migrate dev --schema=./prisma/schema.prisma",
-    "generate:dev": "env-cmd -f .env prisma generate",
-    "generate:test": "env-cmd -f .env.test prisma generate",
     "test": "env-cmd -f .env.test jest"
   },
   "keywords": [],
@@ -17,16 +13,13 @@
   "description": "",
   "devDependencies": {
     "@types/node": "^20.14.10",
-    "prisma": "^5.17.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
-    "@prisma/client": "^5.17.0",
     "env-cmd": "^10.1.0",
-    "express": "^4.19.2",
     "fastify": "^4.28.1",
     "fastify-type-provider-zod": "^2.0.0",
     "firebase-admin": "^13.6.1",

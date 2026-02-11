@@ -1,5 +1,4 @@
-import { Player } from "@prisma/client";
-import { SimpleAssistStats, WeekWithRelations } from "./types";
+import { PlayerInfo, SimpleAssistStats, WeekWithRelations } from "./types";
 
 export const calculateSimpleAssistStats = (
   weeks: WeekWithRelations[],
@@ -13,7 +12,7 @@ export const calculateSimpleAssistStats = (
       if (!processedMatches.has(match.id)) {
         processedMatches.add(match.id);
 
-        const allPlayers = new Set<Player>();
+        const allPlayers = new Set<PlayerInfo>();
 
         // Adiciona todos os jogadores que participaram da partida
         match.homeTeamId && week.teams

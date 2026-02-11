@@ -1,9 +1,8 @@
-import { Player } from "@prisma/client";
-import { PlayerStatsSummary, WeekWithRelations } from "./types";
+import { PlayerInfo, PlayerStatsSummary, WeekWithRelations } from "./types";
 
 type PlayerStatsSummaryMap = { [playerName: string]: PlayerStatsSummary };
 
-const initializePlayerStatsSummary = (player: Player): PlayerStatsSummary => ({
+const initializePlayerStatsSummary = (player: PlayerInfo): PlayerStatsSummary => ({
   playerName: player.name,
   position: player.position,
   weeksPlayed: 0,
@@ -48,7 +47,7 @@ const calculatePlayersStatsSummary = (
         const homeTeam = week.teams?.find(team => team.id === match.homeTeamId);
         const awayTeam = week.teams?.find(team => team.id === match.awayTeamId);
 
-        const allPlayers = new Set<Player>();
+        const allPlayers = new Set<PlayerInfo>();
         homeTeam?.players?.forEach(member => {
           if (!excludePlayerIds.includes(member.player.id)) {
             allPlayers.add(member.player);

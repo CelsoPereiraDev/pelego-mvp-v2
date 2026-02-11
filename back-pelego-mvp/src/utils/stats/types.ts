@@ -1,51 +1,14 @@
-import { Prisma } from "@prisma/client";
+import { WeekData } from '../../lib/firestore';
 
-// Type for Week with full nested relations (same as get_weeks_by_date)
-export type WeekWithRelations = Prisma.WeekGetPayload<{
-  include: {
-    teams: {
-      include: {
-        players: {
-          include: {
-            player: true;
-          };
-        };
-        matchesHome: {
-          include: {
-            result: true;
-            goals: {
-              include: {
-                player: true;
-                ownGoalPlayer: true;
-              };
-            };
-            assists: {
-              include: {
-                player: true;
-              };
-            };
-          };
-        };
-        matchesAway: {
-          include: {
-            result: true;
-            goals: {
-              include: {
-                player: true;
-                ownGoalPlayer: true;
-              };
-            };
-            assists: {
-              include: {
-                player: true;
-              };
-            };
-          };
-        };
-      };
-    };
-  };
-}>;
+// Re-export WeekData as WeekWithRelations for backward compatibility with stat utils
+export type WeekWithRelations = WeekData;
+
+// Minimal player interface for stat calculations (replaces @prisma/client Player)
+export interface PlayerInfo {
+  id: string;
+  name: string;
+  position: string;
+}
 
 export interface PlayerResumeData {
   name: string;
