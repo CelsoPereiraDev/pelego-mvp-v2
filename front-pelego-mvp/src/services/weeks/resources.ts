@@ -1,32 +1,17 @@
-
 import { WeekResponse } from '@/types/weeks';
-import { QueryRequest } from '@/utils/QueryRequest';
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3334/api';
-const ORGANIZATION_ID = 'your-organization-id';
-
+import { QueryRequest, getAuthHeaders, API_BASE_URL } from '@/utils/QueryRequest';
 
 export async function getWeekById(weekId: string) {
-  const queryRequest = new QueryRequest<WeekResponse>(BASE_URL, '');
-  queryRequest.addDefaultHeaders();
-  return queryRequest.get(`week/${weekId}`);
+  return new QueryRequest<WeekResponse>().get(`week/${weekId}`);
 }
 
 export async function getWeeks() {
-  const queryRequest = new QueryRequest<WeekResponse[]>(BASE_URL, ORGANIZATION_ID);
-  queryRequest.addDefaultHeaders();
-  return queryRequest.get('weeks');
+  return new QueryRequest<WeekResponse[]>().get('weeks');
 }
 
 export async function getWeeksByDate(year: string, month?: string): Promise<WeekResponse[]> {
-  const endpoint = month ? `${BASE_URL}/weeks/${year}/${month}` : `${BASE_URL}/weeks/${year}`;
-  const response = await fetch(endpoint);
-
-  if (!response.ok) {
-    throw new Error('Erro ao buscar semanas');
-  }
-
-  return response.json();
+  const path = month ? `weeks/${year}/${month}` : `weeks/${year}`;
+  return new QueryRequest<WeekResponse[]>().get(path);
 }
 
 interface DeleteWeekResponse {
@@ -38,11 +23,9 @@ interface DeleteWeekResponse {
 }
 
 export async function deleteWeek(weekId: string): Promise<DeleteWeekResponse> {
-  const response = await fetch(`${BASE_URL}/weeks/${weekId}`, {
+  const response = await fetch(`${API_BASE_URL}/weeks/${weekId}`, {
     method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: await getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -52,6 +35,3 @@ export async function deleteWeek(weekId: string): Promise<DeleteWeekResponse> {
 
   return await response.json();
 }
-
-
-

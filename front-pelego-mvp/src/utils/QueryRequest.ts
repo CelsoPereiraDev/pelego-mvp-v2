@@ -1,30 +1,36 @@
-export class QueryRequest<ResponseType, PayloadType = undefined> {
-  private baseUrl: string;
-  private clientId: string;
-  private projectId?: string;
-  private token?: string;
+import { auth } from '@/lib/firebase';
 
-  constructor(baseUrl: string, clientId: string, projectId?: string, token?: string) {
-    this.baseUrl = baseUrl;
-    this.clientId = clientId;
-    this.projectId = projectId;
-    this.token = token;
-  }
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3334/api';
 
-  private headers: Record<string, string> = {
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+export class QueryRequest<ResponseType, PayloadType = undefined> {
+  private baseUrl: string;
+
+  constructor(baseUrl: string = API_BASE_URL, _clientId?: string, _projectId?: string, _token?: string) {
+    this.baseUrl = baseUrl;
+  }
+
   addDefaultHeaders() {
-    if (this.token) {
-      this.headers['Authorization'] = `Bearer ${this.token}`;
-    }
+    // Kept for backwards compatibility — headers are now built per-request
   }
 
   async get(endpoint: string): Promise<ResponseType> {
     const response = await fetch(`${this.baseUrl}/${endpoint}`, {
       method: 'GET',
-      headers: this.headers,
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -37,7 +43,7 @@ export class QueryRequest<ResponseType, PayloadType = undefined> {
   async post(endpoint: string, payload: PayloadType): Promise<ResponseType> {
     const response = await fetch(`${this.baseUrl}/${endpoint}`, {
       method: 'POST',
-      headers: this.headers,
+      headers: await getAuthHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -48,10 +54,24 @@ export class QueryRequest<ResponseType, PayloadType = undefined> {
     return response.json();
   }
 
+  async put(endpoint: string, payload: PayloadType): Promise<ResponseType> {
+    const response = await fetch(`${this.baseUrl}/${endpoint}`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao atualizar dados');
+    }
+
+    return response.json();
+  }
+
   async patch(endpoint: string, payload: PayloadType): Promise<ResponseType> {
     const response = await fetch(`${this.baseUrl}/${endpoint}`, {
       method: 'PATCH',
-      headers: this.headers,
+      headers: await getAuthHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -65,7 +85,7 @@ export class QueryRequest<ResponseType, PayloadType = undefined> {
   async getById(id: string, endpoint: string): Promise<ResponseType> {
     const response = await fetch(`${this.baseUrl}/${endpoint}/${id}`, {
       method: 'GET',
-      headers: this.headers,
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -78,7 +98,7 @@ export class QueryRequest<ResponseType, PayloadType = undefined> {
   async delete(endpoint: string): Promise<ResponseType> {
     const response = await fetch(`${this.baseUrl}/${endpoint}`, {
       method: 'DELETE',
-      headers: this.headers,
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -89,6 +109,6 @@ export class QueryRequest<ResponseType, PayloadType = undefined> {
   }
 }
 
+export { getAuthHeaders, API_BASE_URL };
 
-  
 

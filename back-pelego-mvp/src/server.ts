@@ -1,6 +1,7 @@
 import cors from '@fastify/cors';
 import fastify from "fastify";
 import { serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
+import { authMiddleware } from './middleware/auth';
 import { createGoalsHandler } from './routes/create/create_goals';
 import { createMatchHandler } from './routes/create/create_match';
 import { createPlayer } from "./routes/create/create_player";
@@ -29,12 +30,15 @@ app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 // Registra o plugin de CORS
-app.register(cors, { 
+app.register(cors, {
   origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'], 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
 });
 
-// Registra de rotas 
+// Auth middleware (Fase 1: modo permissivo — loga mas não bloqueia)
+app.register(authMiddleware);
+
+// Registra de rotas
 
 // PLAYER
 app.register(createPlayer, { prefix: '/api' });
@@ -70,5 +74,5 @@ app.register(deleteWeekHandler, { prefix: '/api' });
 app.register(updatePlayerScoresHandler, { prefix: '/api' });
 
 app.listen({ port: 3334 }).then(() => {
-    console.log('Server running on port 3333!');
+    console.log('Server running on port 3334!');
 });

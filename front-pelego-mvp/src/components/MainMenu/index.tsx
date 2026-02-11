@@ -1,7 +1,9 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
 import { useWeeks } from '@/services/weeks/useWeeks'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import LogoutIcon from '@mui/icons-material/Logout'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
@@ -20,6 +22,7 @@ import { MenuExpansible, MenuExpansibleContent, MenuExpansibleItem } from '../Me
 export default function MainMenu() {
   const [open, setOpen] = useState(true)
   const pathname = usePathname()
+  const { user, signOut } = useAuth()
   const { weeks } = useWeeks();
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
   const currentYear = new Date().getFullYear();
@@ -33,7 +36,30 @@ export default function MainMenu() {
   };
 
   return (
-    <MenuExpansible open={open} onClick={() => setOpen(!open)} logo={
+    <MenuExpansible open={open} onClick={() => setOpen(!open)} footer={
+      <div className="flex items-center gap-3">
+        {user?.photoURL ? (
+          <img src={user.photoURL} alt="" className="w-8 h-8 rounded-full flex-shrink-0" referrerPolicy="no-referrer" />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-bold text-primary-foreground">
+              {user?.displayName?.[0] || '?'}
+            </span>
+          </div>
+        )}
+        {open && (
+          <>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
+            <button onClick={signOut} className="p-1.5 rounded-md hover:bg-accent transition-colors" title="Sair">
+              <LogoutIcon className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </>
+        )}
+      </div>
+    } logo={
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg bg-gradient-pitch flex items-center justify-center shadow-pitch">
           <SportsSoccerIcon className="text-white w-5 h-5" />

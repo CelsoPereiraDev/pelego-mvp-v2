@@ -9,6 +9,7 @@ interface MenuExpansibleProps {
   open: boolean;
   onClick: () => void;
   logo?: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 interface MenuExpansibleItemProps {
@@ -26,6 +27,7 @@ export function MenuExpansible({
   open,
   logo,
   onClick,
+  footer,
 }: MenuExpansibleProps) {
   return (
     <aside
@@ -61,8 +63,21 @@ export function MenuExpansible({
        <div className="flex-1 overflow-y-auto py-4">
          {children}
        </div>
+       {footer && (
+         <div className="border-t border-border/50 p-3">
+           {footer}
+         </div>
+       )}
       </div>
     </aside>
+  );
+}
+
+export function MenuExpansibleFooter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border-t border-border/50 p-3">
+      {children}
+    </div>
   );
 }
 
