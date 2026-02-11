@@ -8,6 +8,7 @@ import { CreateMatchSchema } from '@/schema/match';
 import { CreateMatchForm } from '@/types/forms';
 import { usePlayers } from '@/services/player/usePlayers';
 import { useWeek } from '@/services/weeks/useWeek';
+import RoleGate from '@/components/RoleGate';
 import { useUpdateWeekAndMatches } from '@/services/matchs/useUpdateWeekAndMatches';
 import { mapWeekToFormValues } from '@/mapper/defaultValueMatches';
 import { Button } from '@/components/ui/button';
@@ -202,6 +203,11 @@ export default function EditWeekPage() {
   }
 
   return (
+    <RoleGate allow={['admin']} fallback={
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
+        <p className="text-lg">Apenas administradores podem editar semanas.</p>
+      </div>
+    }>
     <div className="container mx-auto py-8 px-4">
       <form onSubmit={(e) => {
           const values = getValues();
@@ -421,5 +427,6 @@ export default function EditWeekPage() {
         </div>
       </form>
     </div>
+    </RoleGate>
   );
 }

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { WeekPreview } from '@/components/WeekPreview';
 import { useToast } from '@/hooks/use-toast';
 import { CreateMatchSchema } from '@/schema/match';
+import RoleGate from '@/components/RoleGate';
 import { useCreateWeekAndMatches } from '@/services/matchs/useCreateWeekAndMatches';
 import { usePlayers } from '@/services/player/usePlayers';
 import { CreateMatchForm } from '@/types/forms';
@@ -207,6 +208,11 @@ export default function NewMatchPageV2() {
   }
 
   return (
+    <RoleGate allow={['admin']} fallback={
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
+        <p className="text-lg">Apenas administradores podem criar semanas e partidas.</p>
+      </div>
+    }>
     <div className="container mx-auto py-8 px-4">
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Header */}
@@ -451,5 +457,6 @@ export default function NewMatchPageV2() {
         </div>
       </form>
     </div>
+    </RoleGate>
   );
 }

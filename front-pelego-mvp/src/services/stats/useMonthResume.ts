@@ -1,4 +1,5 @@
 import { MonthResumeProps } from '@/types/stats';
+import { useFut } from '@/contexts/FutContext';
 import useSWR from 'swr';
 import { getMonthResume } from './resources';
 
@@ -8,14 +9,17 @@ export function useMonthResume(
   excludePlayerIds: string[] = [],
   initialData?: MonthResumeProps
 ) {
-  // Create a unique cache key that includes all parameters
-  const cacheKey = month
-    ? `/api/stats/month-resume/${year}/${month}?exclude=${excludePlayerIds.join(',')}`
-    : `/api/stats/month-resume/${year}?exclude=${excludePlayerIds.join(',')}`;
+  const { futId } = useFut();
+
+  const cacheKey = futId
+    ? (month
+      ? `/api/futs/${futId}/stats/month-resume/${year}/${month}?exclude=${excludePlayerIds.join(',')}`
+      : `/api/futs/${futId}/stats/month-resume/${year}?exclude=${excludePlayerIds.join(',')}`)
+    : null;
 
   const { data, error, isLoading } = useSWR(
     cacheKey,
-    () => getMonthResume(year, month, excludePlayerIds),
+    () => getMonthResume(futId!, year, month, excludePlayerIds),
     {
       fallbackData: initialData,
     }

@@ -1,24 +1,18 @@
 
 import { CreateWeekWithTeamsBody } from '@/types/match';
-import useSWR from 'swr';
+import { useFut } from '@/contexts/FutContext';
 import { createWeekWithTeams } from './resources';
 
 export function useCreateWeekWithTeams() {
-  const { data, error, mutate } = useSWR('/api/create_week_with_teams', () => null, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
+  const { futId } = useFut();
 
   const createWeek = async (weekData: CreateWeekWithTeamsBody) => {
-    const createdWeek = await createWeekWithTeams(weekData.date, weekData.teams);
-    mutate();
+    if (!futId) throw new Error('No fut selected');
+    const createdWeek = await createWeekWithTeams(futId, weekData.date, weekData.teams);
     return createdWeek;
   };
 
   return {
     createWeek,
-    data,
-    error,
-    isLoading: !error && !data,
   };
 }

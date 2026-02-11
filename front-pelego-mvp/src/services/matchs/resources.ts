@@ -1,36 +1,36 @@
 import { CreateMatchDataRequested, CreateWeekAndMatchesRequest, CreateWeekAndMatchesResponse, GoalDetails, MatchResponse } from '@/types/match';
 import { QueryRequest, getAuthHeaders, API_BASE_URL } from '@/utils/QueryRequest';
 
-export async function createMatch(matchData: CreateMatchDataRequested) {
-  return new QueryRequest<MatchResponse, CreateMatchDataRequested>().post('create_matches', matchData);
+export async function createMatch(futId: string, matchData: CreateMatchDataRequested) {
+  return new QueryRequest<MatchResponse, CreateMatchDataRequested>().post(`futs/${futId}/create_matches`, matchData);
 }
 
-export async function createMatches(matchesData: { matches: CreateMatchDataRequested[] }) {
-  return new QueryRequest<{ message: string; createdMatches: MatchResponse[] }, { matches: CreateMatchDataRequested[] }>().post('create_matches', matchesData);
+export async function createMatches(futId: string, matchesData: { matches: CreateMatchDataRequested[] }) {
+  return new QueryRequest<{ message: string; createdMatches: MatchResponse[] }, { matches: CreateMatchDataRequested[] }>().post(`futs/${futId}/create_matches`, matchesData);
 }
 
-export async function createGoals(goals: GoalDetails[]) {
-  return new QueryRequest<GoalDetails[], GoalDetails[]>().post('create_goals', goals);
+export async function createGoals(futId: string, goals: GoalDetails[]) {
+  return new QueryRequest<GoalDetails[], GoalDetails[]>().post(`futs/${futId}/create_goals`, goals);
 }
 
-export async function getMatchById(matchId: string) {
-  return new QueryRequest<MatchResponse>().getById(matchId, 'get_match');
+export async function getMatchById(futId: string, matchId: string) {
+  return new QueryRequest<MatchResponse>().get(`futs/${futId}/matches/${matchId}`);
 }
 
-export async function getMatches() {
-  return new QueryRequest<Array<MatchResponse>>().get('get_matches');
+export async function getMatches(futId: string) {
+  return new QueryRequest<Array<MatchResponse>>().get(`futs/${futId}/matches`);
 }
 
-export async function deleteMatch(matchId: string) {
-  return new QueryRequest<{ message: string }>().delete(`delete_match/${matchId}`);
+export async function deleteMatch(futId: string, matchId: string) {
+  return new QueryRequest<{ message: string }>().delete(`futs/${futId}/delete_match/${matchId}`);
 }
 
-export async function createWeekWithTeams(date: string, teams: string[][]) {
-  return new QueryRequest<unknown, { date: string; teams: string[][] }>().post('create_week_with_teams', { date, teams });
+export async function createWeekWithTeams(futId: string, date: string, teams: string[][]) {
+  return new QueryRequest<unknown, { date: string; teams: string[][] }>().post(`futs/${futId}/create_week_with_teams`, { date, teams });
 }
 
-export async function createWeekAndMatches(data: CreateWeekAndMatchesRequest): Promise<CreateWeekAndMatchesResponse> {
-  const response = await fetch(`${API_BASE_URL}/create_week_and_matches`, {
+export async function createWeekAndMatches(futId: string, data: CreateWeekAndMatchesRequest): Promise<CreateWeekAndMatchesResponse> {
+  const response = await fetch(`${API_BASE_URL}/futs/${futId}/create_week_and_matches`, {
     method: 'POST',
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),
@@ -44,8 +44,8 @@ export async function createWeekAndMatches(data: CreateWeekAndMatchesRequest): P
   return await response.json();
 }
 
-export async function updateWeekAndMatches(weekId: string, data: CreateWeekAndMatchesRequest): Promise<CreateWeekAndMatchesResponse> {
-  const response = await fetch(`${API_BASE_URL}/week/${weekId}`, {
+export async function updateWeekAndMatches(futId: string, weekId: string, data: CreateWeekAndMatchesRequest): Promise<CreateWeekAndMatchesResponse> {
+  const response = await fetch(`${API_BASE_URL}/futs/${futId}/week/${weekId}`, {
     method: 'PUT',
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),

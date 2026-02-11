@@ -1,23 +1,17 @@
 import { CreateMatchDataRequested } from '@/types/match';
-import useSWR from 'swr';
+import { useFut } from '@/contexts/FutContext';
 import { createMatches } from './resources';
 
 export function useCreateMatches() {
-  const { data, error, mutate } = useSWR('/api/matches', () => null, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-  });
+  const { futId } = useFut();
 
   const createNewMatches = async (matchesData: { matches: CreateMatchDataRequested[] }) => {
-    const createdMatches = await createMatches(matchesData);
-    mutate();
+    if (!futId) throw new Error('No fut selected');
+    const createdMatches = await createMatches(futId, matchesData);
     return createdMatches;
   };
 
   return {
     createNewMatches,
-    data,
-    error,
-    isLoading: !error && !data,
   };
 }

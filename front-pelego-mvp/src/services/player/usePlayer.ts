@@ -1,31 +1,37 @@
+'use client';
+
 import { CreatePlayerDataRequested, PlayerResponse } from '@/types/player';
-import useSWR, { useSWRConfig } from 'swr';
-import { deletePlayer, editPlayer, getPlayer } from './resources';
+import { useFut } from '@/contexts/FutContext';
+import { useFirestoreDocument } from '@/hooks/useFirestoreDocument';
+import { firestorePlayerToResponse } from '@/services/firestore/converters';
+import { deletePlayer, editPlayer } from './resources';
 
-export function usePlayer(playerId: string, initialData?: PlayerResponse) {
-  const { data, error, isLoading } = useSWR(playerId ? `/api/get_player/${playerId}` : null, () => getPlayer(playerId), {
-    fallbackData: initialData,
-  });
+export function usePlayer(playerId: string) {
+  const { futId } = useFut();
+  const docPath = futId && playerId ? `futs/${futId}/players/${playerId}` : null;
 
-  const { mutate } = useSWRConfig();
+  const { data, loading, error } = useFirestoreDocument<PlayerResponse>(
+    docPath,
+    firestorePlayerToResponse,
+  );
 
-  const methodsHandler = {
-    delete: async function _delete() {
-      await deletePlayer(playerId);
-      mutate(`/api/get_players`);
-    },
-    edit: async function _edit(playerData: CreatePlayerDataRequested) {
-      const updatedPlayer = await editPlayer(playerId, playerData);
-      mutate(`/api/get_player/${playerId}`, updatedPlayer, false);
-      return updatedPlayer;
-    },
+  const del = async () => {
+    if (!futId) throw new Error('No fut selected');
+    await deletePlayer(futId, playerId);
+    // No mutate needed — Firestore listener auto-updates
+  };
+
+  const edit = async (playerData: CreatePlayerDataRequested) => {
+    if (!futId) throw new Error('No fut selected');
+    const updatedPlayer = await editPlayer(futId, playerId, playerData);
+    return updatedPlayer;
   };
 
   return {
     player: data,
-    delete: methodsHandler.delete,
-    edit: methodsHandler.edit,
-    isLoading,
+    delete: del,
+    edit,
+    isLoading: loading,
     isError: error,
   };
 }

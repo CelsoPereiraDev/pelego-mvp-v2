@@ -12,6 +12,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useWeek } from '@/services/weeks/useWeek';
 import { useWeeks } from '@/services/weeks/useWeeks';
+import RoleGate from '@/components/RoleGate';
 import AddIcon from '@mui/icons-material/Add';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -92,12 +93,14 @@ const WeeksList: React.FC = () => {
     <div className="min-h-screen bg-[hsl(var(--background))] w-full flex justify-start flex-col p-12 items-center gap-7">
       <h1 className="text-3xl text-center mb-9 text-[hsl(var(--foreground))]">Semanas</h1>
       <Card className="p-6 min-h-full rounded-lg overflow-auto min-w-[80%]">
-        <div className="mb-8 w-full flex justify-end">
-          <button className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] p-3 w-[200px] rounded flex flex-row gap-1 items-center justify-center" onClick={goToCreateMatch}> 
-            <AddIcon/> 
-            <span>Adicionar Semana</span>
-          </button>
-        </div>
+        <RoleGate allow={['admin']}>
+          <div className="mb-8 w-full flex justify-end">
+            <button className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] p-3 w-[200px] rounded flex flex-row gap-1 items-center justify-center" onClick={goToCreateMatch}>
+              <AddIcon/>
+              <span>Adicionar Semana</span>
+            </button>
+          </div>
+        </RoleGate>
         <ul className="flex flex-col gap-3">
           {weeks?.map((week, index) => (
             <li
@@ -114,40 +117,42 @@ const WeeksList: React.FC = () => {
                 </span>
               </div>
         
-              <Dialog>
-                <DialogTrigger>
-                  <button
-                    className="text-[hsl(var(--destructive))]"
-                  >
-                    <DeleteOutlineIcon />
-                  </button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="text-[hsl(var(--foreground))]">Você tem certeza que quer excluir as partidas da Semana {index + 1}?</DialogTitle>
-                    <DialogDescription className="text-[hsl(var(--muted-foreground))]">
-                      Essa ação não poderá ser desfeita. Você irá permanentemente deletar os dados relacionados à esta semana também
-                    </DialogDescription>
-                  </DialogHeader>
-                   <button
-                    className="bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] p-3 w-[200px] rounded flex flex-row gap-2 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => handleDelete(week.id)}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting && deletingWeekId === week.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Deletando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <DeleteOutlineIcon />
-                        <span>Deletar Semana {index + 1}</span>
-                      </>
-                    )}
-                  </button>
-                </DialogContent>
-              </Dialog>
+              <RoleGate allow={['admin']}>
+                <Dialog>
+                  <DialogTrigger>
+                    <button
+                      className="text-[hsl(var(--destructive))]"
+                    >
+                      <DeleteOutlineIcon />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="text-[hsl(var(--foreground))]">Você tem certeza que quer excluir as partidas da Semana {index + 1}?</DialogTitle>
+                      <DialogDescription className="text-[hsl(var(--muted-foreground))]">
+                        Essa ação não poderá ser desfeita. Você irá permanentemente deletar os dados relacionados à esta semana também
+                      </DialogDescription>
+                    </DialogHeader>
+                    <button
+                      className="bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] p-3 w-[200px] rounded flex flex-row gap-2 items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => handleDelete(week.id)}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting && deletingWeekId === week.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Deletando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <DeleteOutlineIcon />
+                          <span>Deletar Semana {index + 1}</span>
+                        </>
+                      )}
+                    </button>
+                  </DialogContent>
+                </Dialog>
+              </RoleGate>
             </li>
           ))}
         </ul>

@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addPlayerMapper } from "@/mapper/addPlayerMapper";
 import { formToPlayerMapper } from "@/mapper/formToPlayerMapper";
+import RoleGate from "@/components/RoleGate";
 import { playerGetOverallSchema } from "@/schema/player";
+import { useFut } from "@/contexts/FutContext";
 import { createPlayer } from "@/services/player/resources";
 import { Player, PlayerGetOverallFormData } from "@/types/player";
 import { calculateOverall } from "@/utils/calculateOverall";
@@ -22,6 +24,7 @@ import { SingleValue } from "react-select";
 
 
 export default function AddPlayersPage() {
+  const { futId } = useFut();
   const {
     control,
     watch,
@@ -53,10 +56,11 @@ export default function AddPlayersPage() {
   };
 
   const onSubmit = async (formData: PlayerGetOverallFormData) => {
+    if (!futId) return;
     const playerData = addPlayerMapper(formData);
 
     try {
-      const createdPlayer = await createPlayer(playerData);
+      const createdPlayer = await createPlayer(futId, playerData);
       console.log("Jogador criado com sucesso:", createdPlayer);
     } catch (error) {
       console.error("Erro ao criar jogador:", error);
@@ -64,6 +68,11 @@ export default function AddPlayersPage() {
   };
 
   return (
+    <RoleGate allow={['admin']} fallback={
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
+        <p className="text-lg">Apenas administradores podem adicionar jogadores.</p>
+      </div>
+    }>
     <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col items-center p-8 gap-8">
       <h1 className="text-3xl font-semibold text-[hsl(var(--foreground))] mb-8">
         Adicionar Jogador
@@ -234,5 +243,6 @@ export default function AddPlayersPage() {
         )}
       </div>
     </div>
+    </RoleGate>
   );
 }

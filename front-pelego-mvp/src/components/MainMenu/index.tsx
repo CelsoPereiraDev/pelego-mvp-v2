@@ -1,7 +1,9 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useFut } from '@/contexts/FutContext'
 import { useWeeks } from '@/services/weeks/useWeeks'
+import FutSelector from '@/components/FutSelector'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import LogoutIcon from '@mui/icons-material/Logout'
 import BarChartIcon from '@mui/icons-material/BarChart'
@@ -23,6 +25,7 @@ export default function MainMenu() {
   const [open, setOpen] = useState(true)
   const pathname = usePathname()
   const { user, signOut } = useAuth()
+  const { userRole } = useFut()
   const { weeks } = useWeeks();
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
   const currentYear = new Date().getFullYear();
@@ -67,6 +70,7 @@ export default function MainMenu() {
         <span className='text-xl font-bold leading-none text-gradient-pitch tracking-tight'>PELEGO</span>
       </div>
     }>
+      <FutSelector collapsed={!open} />
       <MenuExpansibleContent>
         <MenuExpansibleItem href="/" label="Home" icon={<HomeIcon />} active={pathname === '/'} />
         <MenuExpansibleItem href="/players" label="Jogadores" icon={<PeopleAltIcon />} active={pathname.includes('players')} />

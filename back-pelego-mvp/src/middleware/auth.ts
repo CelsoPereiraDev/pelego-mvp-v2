@@ -16,8 +16,8 @@ export async function authMiddleware(app: FastifyInstance) {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // Phase 1: permissive mode — log but don't block
-      request.log.warn('Request without auth token');
+      // No token — user stays unauthenticated
+      // Route handlers check request.user and return 401 if needed
       return;
     }
 
@@ -31,8 +31,8 @@ export async function authMiddleware(app: FastifyInstance) {
         name: decodedToken.name,
       };
     } catch (error) {
-      // Phase 1: permissive mode — log but don't block
       request.log.warn('Invalid auth token');
+      // Invalid token — request proceeds without user
     }
   });
 }
