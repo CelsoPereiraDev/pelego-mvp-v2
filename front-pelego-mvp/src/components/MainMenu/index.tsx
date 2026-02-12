@@ -16,6 +16,7 @@ import LocalPoliceIcon from '@mui/icons-material/LocalPolice'
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt'
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer'
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined'
+import SettingsIcon from '@mui/icons-material/Settings'
 import TodayIcon from '@mui/icons-material/Today'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -180,6 +181,9 @@ export default function MainMenu() {
           />
         </MenuExpansibleItem>  
         <MenuExpansibleItem href="/weeks" label="Semanas" icon={<EventAvailableIcon />} active={pathname === '/weeks'} />
+        {userRole === 'admin' && (
+          <MenuExpansibleItem href="/fut-settings" label="Configurações" icon={<SettingsIcon />} active={pathname === '/fut-settings'} />
+        )}
       </MenuExpansibleContent>
     </MenuExpansible>
   )

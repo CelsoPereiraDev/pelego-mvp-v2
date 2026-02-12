@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { QueryRequest } from '@/utils/QueryRequest';
+import { MemberData } from '@/types/member';
 
 interface FutData {
   id: string;
@@ -11,15 +12,6 @@ interface FutData {
   createdAt: string;
   createdBy: string;
   memberCount: number;
-}
-
-interface MemberData {
-  userId: string;
-  role: 'admin' | 'user' | 'viewer';
-  email?: string;
-  displayName?: string;
-  linkedPlayerId?: string;
-  joinedAt: string;
 }
 
 interface FutContextType {

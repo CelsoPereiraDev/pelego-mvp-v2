@@ -5,9 +5,16 @@ import { FutProvider, useFut } from '@/contexts/FutContext';
 import MainMenu from '@/components/MainMenu';
 import LandingPage from '@/app/landing/page';
 import FutOnboarding from '@/components/FutOnboarding';
+import { usePathname } from 'next/navigation';
 
 function AppShellInner({ children }: { children: React.ReactNode }) {
   const { futId, loading: futLoading, futs } = useFut();
+  const pathname = usePathname();
+
+  // Invite pages bypass sidebar and FutOnboarding
+  if (pathname.startsWith('/invite/')) {
+    return <>{children}</>;
+  }
 
   if (futLoading) {
     return (

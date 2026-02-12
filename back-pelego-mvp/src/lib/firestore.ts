@@ -229,6 +229,172 @@ export async function linkPlayerToMember(futId: string, userId: string, playerId
 }
 
 // ============================================================
+// INVITES
+// ============================================================
+
+export interface InviteData {
+  token: string;
+  futId: string;
+  futName: string;
+  role: 'user' | 'viewer';
+  createdBy: string;
+  createdAt: string;
+  expiresAt: string | null;
+  maxUses: number | null;
+  usedCount: number;
+  active: boolean;
+}
+
+export async function createInvite(
+  futId: string,
+  futName: string,
+  role: 'user' | 'viewer',
+  createdBy: string,
+  expiresAt?: Date,
+  maxUses?: number
+): Promise<InviteData> {
+  const token = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+  const now = new Date();
+
+  const inviteRef = db.collection('invites').doc(token);
+  await inviteRef.set({
+    futId,
+    futName,
+    role,
+    createdBy,
+    createdAt: Timestamp.fromDate(now),
+    expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : null,
+    maxUses: maxUses ?? null,
+    usedCount: 0,
+    active: true,
+  });
+
+  return {
+    token,
+    futId,
+    futName,
+    role,
+    createdBy,
+    createdAt: now.toISOString(),
+    expiresAt: expiresAt ? expiresAt.toISOString() : null,
+    maxUses: maxUses ?? null,
+    usedCount: 0,
+    active: true,
+  };
+}
+
+export async function getInvitesByFut(futId: string): Promise<InviteData[]> {
+  const snapshot = await db.collection('invites')
+    .where('futId', '==', futId)
+    .where('active', '==', true)
+    .get();
+
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      token: doc.id,
+      futId: data.futId,
+      futName: data.futName,
+      role: data.role,
+      createdBy: data.createdBy,
+      createdAt: toDate(data.createdAt),
+      expiresAt: data.expiresAt ? toDate(data.expiresAt) : null,
+      maxUses: data.maxUses ?? null,
+      usedCount: data.usedCount || 0,
+      active: data.active,
+    };
+  });
+}
+
+export async function getInviteByToken(token: string): Promise<InviteData | null> {
+  const doc = await db.collection('invites').doc(token).get();
+  if (!doc.exists) return null;
+  const data = doc.data()!;
+  return {
+    token: doc.id,
+    futId: data.futId,
+    futName: data.futName,
+    role: data.role,
+    createdBy: data.createdBy,
+    createdAt: toDate(data.createdAt),
+    expiresAt: data.expiresAt ? toDate(data.expiresAt) : null,
+    maxUses: data.maxUses ?? null,
+    usedCount: data.usedCount || 0,
+    active: data.active,
+  };
+}
+
+export async function revokeInvite(token: string): Promise<void> {
+  await db.collection('invites').doc(token).update({ active: false });
+}
+
+export async function acceptInvite(
+  token: string,
+  userId: string,
+  email: string,
+  displayName: string
+): Promise<{ futId: string; role: string }> {
+  const inviteDoc = await db.collection('invites').doc(token).get();
+  if (!inviteDoc.exists) throw new Error('Convite não encontrado');
+
+  const data = inviteDoc.data()!;
+
+  if (!data.active) throw new Error('Convite foi revogado');
+
+  if (data.expiresAt) {
+    const expiresAt = data.expiresAt.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
+    if (expiresAt < new Date()) throw new Error('Convite expirado');
+  }
+
+  if (data.maxUses !== null && data.usedCount >= data.maxUses) {
+    throw new Error('Convite atingiu o limite de usos');
+  }
+
+  // Check if user is already a member
+  const existingMember = await getFutMember(data.futId, userId);
+  if (existingMember) throw new Error('Você já é membro deste Fut');
+
+  // Add user as member
+  await addFutMember(data.futId, userId, data.role, email, displayName);
+
+  // Increment usedCount
+  await db.collection('invites').doc(token).update({
+    usedCount: FieldValue.increment(1),
+  });
+
+  return { futId: data.futId, role: data.role };
+}
+
+// ============================================================
+// UPDATE FUT
+// ============================================================
+
+export async function updateFut(futId: string, data: { name?: string; description?: string }): Promise<FutData> {
+  const futRef = db.collection('futs').doc(futId);
+  const futDoc = await futRef.get();
+  if (!futDoc.exists) throw new Error('Fut não encontrado');
+
+  const updateData: Record<string, any> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.description !== undefined) updateData.description = data.description;
+
+  if (Object.keys(updateData).length > 0) {
+    await futRef.update(updateData);
+  }
+
+  const updated = await futRef.get();
+  const updatedData = updated.data()!;
+  return {
+    id: futId,
+    name: updatedData.name,
+    description: updatedData.description,
+    createdAt: toDate(updatedData.createdAt),
+    createdBy: updatedData.createdBy,
+    memberCount: updatedData.memberCount || 0,
+  };
+}
+
+// ============================================================
 // PLAYERS
 // ============================================================
 
