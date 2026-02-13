@@ -160,7 +160,10 @@ Environment files (all gitignored):
 - `.env` - Development (includes Firebase service account path)
 - `.env.test` - Test environment
 
-Required env vars: `GOOGLE_APPLICATION_CREDENTIALS` (path to Firebase service account JSON)
+Required env vars:
+- `GOOGLE_APPLICATION_CREDENTIALS` (path to Firebase service account JSON)
+- `FIREBASE_PROJECT_ID` (optional, defaults to `pelego-v2`)
+- `CORS_ORIGIN` (comma-separated allowed origins; defaults to `http://localhost:3000`)
 
 ### Frontend Environment
 
@@ -191,6 +194,34 @@ Frontend expects:
    - Create page in `src/app/<feature>/page.tsx`
    - Use service hooks for data fetching
    - Wrap admin-only features with `<RoleGate allow={['admin']}>`
+
+## Security
+
+### Auth Middleware Behavior
+
+The backend auth middleware (`back-pelego-mvp/src/middleware/auth.ts`) uses a Fastify plugin (`fastify-plugin`) that:
+- **No Bearer token:** Request proceeds unauthenticated (`request.user` is undefined). Route handlers must check `request.user` and return 401 if needed.
+- **Invalid/expired Bearer token:** Returns **401** immediately — the request is rejected.
+- **Valid Bearer token:** Sets `request.user` with `uid`, `email`, and `name`.
+
+### Firestore Security Rules
+
+Firestore rules (`firestore.rules`) enforce:
+- All Fut data (players, weeks, teams, matches, prizes, invites) requires **membership** in the Fut
+- Write operations require `admin` or `user` role (except invites: admin only)
+- `/users/{userId}` documents are readable only by the owner; writes are restricted to the backend Admin SDK
+- Catch-all deny rule at the bottom blocks all unmatched paths
+
+### Frontend Error Handling
+
+`QueryRequest` (`front-pelego-mvp/src/utils/QueryRequest.ts`) uses safe, user-facing error messages for common HTTP status codes (400, 401, 403, 404, 409, 429) to avoid leaking backend internals. For other status codes, it falls back to the backend's `message`/`error` field or a generic fallback.
+
+### Security Conventions
+
+- Never commit `.env` files or Firebase service account JSON — all are gitignored
+- Never set `CORS_ORIGIN` to `*` in production
+- Always use `verifyMembership()` in scoped route handlers to enforce Fut access
+- Use `RoleGate` on the frontend for role-based UI; enforce roles on the backend via `verifyMembership().role`
 
 ## Common Pitfalls
 

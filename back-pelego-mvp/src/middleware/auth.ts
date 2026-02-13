@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import fp from 'fastify-plugin';
 import { adminAuth } from '../lib/firebase-admin';
 
 declare module 'fastify' {
@@ -11,13 +12,14 @@ declare module 'fastify' {
   }
 }
 
-export async function authMiddleware(app: FastifyInstance) {
+export const authMiddleware = fp(async function authMiddleware(app: FastifyInstance) {
   app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       // No token — user stays unauthenticated
       // Route handlers check request.user and return 401 if needed
+      request.log.info(`No auth header on ${request.method} ${request.url}`);
       return;
     }
 
@@ -31,8 +33,8 @@ export async function authMiddleware(app: FastifyInstance) {
         name: decodedToken.name,
       };
     } catch (error) {
-      request.log.warn('Invalid auth token');
-      // Invalid token — request proceeds without user
+      request.log.warn('Token verification failed');
+      return reply.status(401).send({ error: 'Token inválido ou expirado' });
     }
   });
-}
+});
