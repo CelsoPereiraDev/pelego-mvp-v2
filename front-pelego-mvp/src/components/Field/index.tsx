@@ -1,8 +1,14 @@
-import { Player } from "@/types/player";
-import { Team } from "@/types/team";
-import PlayerCardSmall from "../PlayerCardSmall";
+import { Player } from '@/types/player';
+import { Team } from '@/types/team';
+import PlayerCardSmall from '../PlayerCardSmall';
 
-export default function Field({ team, showOverall }: { team: Team; showOverall: boolean }): JSX.Element {
+export default function Field({
+  team,
+  showOverall,
+}: {
+  team: Team;
+  showOverall: boolean;
+}): JSX.Element {
   const chunkArray = (players: Player[], size: number): Player[][] => {
     const chunkedArray: Player[][] = [];
     for (let i = 0; i < players.length; i += size) {
@@ -35,14 +41,11 @@ export default function Field({ team, showOverall }: { team: Team; showOverall: 
   const positions: (keyof typeof groupedPlayers)[] = ['ATK', 'MEI', 'DEF', 'GOL'];
 
   // Ajuste para garantir que as linhas tenham no máximo 3 jogadores
-  positions.forEach(position => {
+  positions.forEach((position) => {
     const players = groupedPlayers[position];
     const chunkedPlayers = chunkArray(players, 3); // Agora cria grupos de no máximo 3 jogadores
     playerGroups.push(...chunkedPlayers);
   });
-
-
-
 
   return (
     <div className="bg-[url('../../public/new_field.jpg')] h-[1000px] w-[600px] bg-cover bg-center bg-no-repeat">

@@ -20,7 +20,10 @@ interface StatCardProps {
   className?: string;
 }
 
-const variantConfig: Record<StatVariant, { borderClass: string; badgeVariant: 'goal' | 'assist' | 'ownGoal' | 'gold' }> = {
+const variantConfig: Record<
+  StatVariant,
+  { borderClass: string; badgeVariant: 'goal' | 'assist' | 'ownGoal' | 'gold' }
+> = {
   goal: {
     borderClass: 'border-[hsl(var(--goal-indicator))]/20',
     badgeVariant: 'goal',
@@ -46,11 +49,12 @@ export function StatCard({ title, icon, data, variant, className }: StatCardProp
     <Card
       className={cn(config.borderClass, 'transition-base', className)}
       role="region"
-      aria-labelledby={`${variant}-heading`}
-    >
+      aria-labelledby={`${variant}-heading`}>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden="true">{icon}</span>
+          <span className="text-2xl" aria-hidden="true">
+            {icon}
+          </span>
           <CardTitle id={`${variant}-heading`} className="text-lg text-foreground">
             {title}
           </CardTitle>
@@ -62,8 +66,7 @@ export function StatCard({ title, icon, data, variant, className }: StatCardProp
             {data.map((item, index) => (
               <li
                 key={index}
-                className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-fast"
-              >
+                className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-fast">
                 <div className="flex items-center gap-3">
                   <Badge variant={config.badgeVariant} size="sm">
                     {index + 1}º

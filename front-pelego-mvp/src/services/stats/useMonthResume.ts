@@ -5,11 +5,7 @@ import { useFut } from '@/contexts/FutContext';
 import { useEffect, useState } from 'react';
 import { getMonthResume } from './resources';
 
-export function useMonthResume(
-  year: string,
-  month?: string,
-  excludePlayerIds: string[] = [],
-) {
+export function useMonthResume(year: string, month?: string, excludePlayerIds: string[] = []) {
   const { futId } = useFut();
   const [monthResume, setMonthResume] = useState<MonthResumeProps | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -41,7 +37,9 @@ export function useMonthResume(
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [futId, year, month, excludePlayerIds.join(',')]);
 
   return {

@@ -19,13 +19,7 @@ export const GoalEntryV2: React.FC<GoalEntryProps> = ({
   setValue,
   teamPlayers,
   opposingTeamPlayers,
-  teamScore,
 }) => {
-  // Watch all goal scorers to calculate remaining
-  const allGoalScorers = useWatch({
-    control,
-    name: `matches.${matchIndex}.${side}Goals.whoScores`,
-  });
 
   const currentGoal = useWatch({
     control,
@@ -49,9 +43,7 @@ export const GoalEntryV2: React.FC<GoalEntryProps> = ({
     <div className="space-y-3 p-3 border border-border rounded-lg bg-card">
       <div className="flex items-center justify-between">
         {/* Updated label with ordinal and team name */}
-        <Label className="text-sm font-medium">
-          {getOrdinalGoalLabel(goalIndex, teamName)}
-        </Label>
+        <Label className="text-sm font-medium">{getOrdinalGoalLabel(goalIndex, teamName)}</Label>
         {currentGoal?.playerId && (
           <Badge variant="goal" className="text-xs gap-1">
             <CheckCircle2 className="w-3 h-3" />
@@ -75,10 +67,7 @@ export const GoalEntryV2: React.FC<GoalEntryProps> = ({
               onChange={(value) => {
                 field.onChange(value);
                 // Always set goals to 1 (each entry = 1 goal)
-                setValue(
-                  `matches.${matchIndex}.${side}Goals.whoScores.${goalIndex}.goals`,
-                  1
-                );
+                setValue(`matches.${matchIndex}.${side}Goals.whoScores.${goalIndex}.goals`, 1);
               }}
               placeholder="Selecionar..."
             />
@@ -158,7 +147,7 @@ const AssistEntry: React.FC<AssistEntryProps> = ({
               // Auto-set assists count to 1 when player selected, 0 when cleared
               setValue(
                 `matches.${matchIndex}.${side}Assists.${goalIndex}.assists`,
-                newValue ? 1 : 0
+                newValue ? 1 : 0,
               );
             }}
             placeholder="Quem assistiu?"

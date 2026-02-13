@@ -1,10 +1,18 @@
 import { PlayerOverall, PlayerPosition, PlayerResponse } from '@/types/player';
 import { WeekResponse } from '@/types/weeks';
-import { AssistResponse, GoalResponse, MatchResponse, MatchResultResponse, TeamMember, TeamResponse } from '@/types/match';
+import {
+  AssistResponse,
+  GoalResponse,
+  MatchResponse,
+  MatchResultResponse,
+  TeamMember,
+  TeamResponse,
+} from '@/types/match';
 import { DocumentData, Timestamp } from 'firebase/firestore';
 
 // ─── Helpers ────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toDate(val: any): Date {
   if (val instanceof Timestamp) return val.toDate();
   if (val?.toDate) return val.toDate();
@@ -12,10 +20,12 @@ function toDate(val: any): Date {
   return new Date(val);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toISOString(val: any): string {
   return toDate(val).toISOString();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseOverall(overall: any): PlayerOverall {
   if (typeof overall === 'string') {
     try {
@@ -24,7 +34,9 @@ function parseOverall(overall: any): PlayerOverall {
       return { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 };
     }
   }
-  return overall || { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 };
+  return (
+    overall || { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 }
+  );
 }
 
 // ─── Player Converters ──────────────────────────────────────────
@@ -54,11 +66,11 @@ export function buildWeekResponse(
   matchesData: Array<{ id: string; data: DocumentData }>,
   playersMap: Map<string, PlayerResponse>,
 ): WeekResponse {
-  const teams: TeamResponse[] = teamsData.map(teamDoc => {
+  const teams: TeamResponse[] = teamsData.map((teamDoc) => {
     const td = teamDoc.data;
     const playerIds: string[] = td.playerIds || [];
 
-    const players: TeamMember[] = playerIds.map(pid => ({
+    const players: TeamMember[] = playerIds.map((pid) => ({
       id: `${teamDoc.id}_${pid}`,
       playerId: pid,
       teamId: teamDoc.id,
@@ -66,7 +78,15 @@ export function buildWeekResponse(
         id: pid,
         name: 'Unknown',
         position: 'MEI' as PlayerPosition,
-        overall: { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 },
+        overall: {
+          pace: 0,
+          shooting: 0,
+          passing: 0,
+          dribble: 0,
+          defense: 0,
+          physics: 0,
+          overall: 0,
+        },
         isChampion: false,
       },
     }));
@@ -106,6 +126,7 @@ function buildMatchResponse(
   md: DocumentData,
   playersMap: Map<string, PlayerResponse>,
 ): MatchResponse {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const goals: GoalResponse[] = (md.goals || []).map((g: any, i: number) => ({
     id: `${matchId}_goal_${i}`,
     matchId,
@@ -113,15 +134,48 @@ function buildMatchResponse(
     ownGoalPlayerId: g.ownGoalPlayerId || undefined,
     ownGoalPlayer: g.ownGoalPlayerId ? playersMap.get(g.ownGoalPlayerId) || undefined : undefined,
     match: {} as MatchResponse, // circular ref not needed in practice
-    player: g.playerId ? (playersMap.get(g.playerId) || { id: g.playerId, name: 'Unknown', position: 'MEI' as PlayerPosition, overall: { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 }, isChampion: false }) : {} as PlayerResponse,
+    player: g.playerId
+      ? playersMap.get(g.playerId) || {
+          id: g.playerId,
+          name: 'Unknown',
+          position: 'MEI' as PlayerPosition,
+          overall: {
+            pace: 0,
+            shooting: 0,
+            passing: 0,
+            dribble: 0,
+            defense: 0,
+            physics: 0,
+            overall: 0,
+          },
+          isChampion: false,
+        }
+      : ({} as PlayerResponse),
     goals: g.goals,
   }));
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const assists: AssistResponse[] = (md.assists || []).map((a: any, i: number) => ({
     id: `${matchId}_assist_${i}`,
     matchId,
     playerId: a.playerId || '',
-    player: a.playerId ? (playersMap.get(a.playerId) || { id: a.playerId, name: 'Unknown', position: 'MEI' as PlayerPosition, overall: { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 }, isChampion: false }) : {} as PlayerResponse,
+    player: a.playerId
+      ? playersMap.get(a.playerId) || {
+          id: a.playerId,
+          name: 'Unknown',
+          position: 'MEI' as PlayerPosition,
+          overall: {
+            pace: 0,
+            shooting: 0,
+            passing: 0,
+            dribble: 0,
+            defense: 0,
+            physics: 0,
+            overall: 0,
+          },
+          isChampion: false,
+        }
+      : ({} as PlayerResponse),
     assists: a.assists,
   }));
 

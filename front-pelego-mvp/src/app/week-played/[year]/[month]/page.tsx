@@ -44,21 +44,21 @@ const PlayerWeeksTogetherPage: React.FC = () => {
       const jogadorMap: PlayerWeeksTogether = {};
       const playersSet = new Set<Player>();
 
-      weeks.forEach(week => {
-        week.teams.forEach(team => {
-          const jogadores = team.players.map(playerData => ({
+      weeks.forEach((week) => {
+        week.teams.forEach((team) => {
+          const jogadores = team.players.map((playerData) => ({
             id: playerData.player.id,
-            name: playerData.player.name
+            name: playerData.player.name,
           }));
 
-          jogadores.forEach(jogador => {
+          jogadores.forEach((jogador) => {
             playersSet.add(jogador); // Armazena todos os jogadores disponíveis
 
             if (!jogadorMap[jogador.name]) {
               jogadorMap[jogador.name] = {};
             }
 
-            jogadores.forEach(outroJogador => {
+            jogadores.forEach((outroJogador) => {
               if (jogador.name !== outroJogador.name) {
                 if (!jogadorMap[jogador.name][outroJogador.name]) {
                   jogadorMap[jogador.name][outroJogador.name] = 0;
@@ -102,11 +102,10 @@ const PlayerWeeksTogetherPage: React.FC = () => {
   if (isLoading) return <div className="text-[hsl(var(--foreground))]">Loading...</div>;
   if (isError) return <div className="text-[hsl(var(--foreground))]">Error: {isError.message}</div>;
 
-  const filteredData = selectedPlayers
-    .map((player) => ({
-      player,
-      companions: playerWeeksTogether[player.name] || {}
-    }));
+  const filteredData = selectedPlayers.map((player) => ({
+    player,
+    companions: playerWeeksTogether[player.name] || {},
+  }));
 
   // Função para remover duplicatas e evitar casos como "Jogador A jogou com Jogador B" e vice-versa
   const uniquePairs = (data: PlayerWeeksTogether) => {
@@ -119,24 +118,29 @@ const PlayerWeeksTogetherPage: React.FC = () => {
           return { player, companion, weeksTogether };
         }
         return null;
-      })
+      }),
     );
-    return uniquePairsArray.filter(pair => pair !== null);
+    return uniquePairsArray.filter((pair) => pair !== null);
   };
 
   // Jogadores que jogaram 2 ou mais vezes juntos (sem repetição)
   const moreThanTwoTimesTogether = uniquePairs(playerWeeksTogether)
-    .filter(pair => pair!.weeksTogether >= 2)
-    .map(pair => pair!);
+    .filter((pair) => pair!.weeksTogether >= 2)
+    .map((pair) => pair!);
 
   // Função para ordenar os dados
-  const sortData = <T extends Record<string, unknown>>(data: T[], config: TableSortConfig | null): T[] => {
+  const sortData = <T extends Record<string, unknown>>(
+    data: T[],
+    config: TableSortConfig | null,
+  ): T[] => {
     if (config) {
       return [...data].sort((a, b) => {
-        if (a[config.key] < b[config.key]) {
+        const aVal = a[config.key] as string | number;
+        const bVal = b[config.key] as string | number;
+        if (aVal < bVal) {
           return config.direction === 'asc' ? -1 : 1;
         }
-        if (a[config.key] > b[config.key]) {
+        if (aVal > bVal) {
           return config.direction === 'asc' ? 1 : -1;
         }
         return 0;
@@ -148,7 +152,11 @@ const PlayerWeeksTogetherPage: React.FC = () => {
   const sortedSelectedData = sortData(filteredData, sortConfig);
   const sortedAllData = sortData(moreThanTwoTimesTogether, sortConfigAll);
 
-  const requestSort = (key: string, setConfig: React.Dispatch<React.SetStateAction<TableSortConfig | null>>, currentConfig: TableSortConfig | null) => {
+  const requestSort = (
+    key: string,
+    setConfig: React.Dispatch<React.SetStateAction<TableSortConfig | null>>,
+    currentConfig: TableSortConfig | null,
+  ) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (currentConfig && currentConfig.key === key && currentConfig.direction === 'asc') {
       direction = 'desc';
@@ -175,9 +183,13 @@ const PlayerWeeksTogetherPage: React.FC = () => {
         <SelectWithSearch
           isMulti
           placeholder="Selecione os jogadores"
-          options={availablePlayers.map(player => ({ label: player.name, value: player }))}
-          value={selectedPlayers.map(player => ({ label: player.name, value: player }))}
-          onChange={(selectedOptions) => setSelectedPlayers(selectedOptions.map((option: { label: string; value: Player }) => option.value))}
+          options={availablePlayers.map((player) => ({ label: player.name, value: player }))}
+          value={selectedPlayers.map((player) => ({ label: player.name, value: player }))}
+          onChange={(selectedOptions) =>
+            setSelectedPlayers(
+              selectedOptions.map((option: { label: string; value: Player }) => option.value),
+            )
+          }
         />
       </div>
 
@@ -187,9 +199,21 @@ const PlayerWeeksTogetherPage: React.FC = () => {
           <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
             <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
               <tr>
-                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('player', setSortConfig, sortConfig)}>Jogador</th>
-                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('companion', setSortConfig, sortConfig)}>Jogou com</th>
-                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('weeksTogether', setSortConfig, sortConfig)}>Semanas Juntas</th>
+                <th
+                  className="px-4 py-2 text-left cursor-pointer"
+                  onClick={() => requestSort('player', setSortConfig, sortConfig)}>
+                  Jogador
+                </th>
+                <th
+                  className="px-4 py-2 text-left cursor-pointer"
+                  onClick={() => requestSort('companion', setSortConfig, sortConfig)}>
+                  Jogou com
+                </th>
+                <th
+                  className="px-4 py-2 text-left cursor-pointer"
+                  onClick={() => requestSort('weeksTogether', setSortConfig, sortConfig)}>
+                  Semanas Juntas
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -197,13 +221,12 @@ const PlayerWeeksTogetherPage: React.FC = () => {
                 Object.entries(companions).map(([companionName, weeksTogether], index) => (
                   <tr
                     key={`${player.name}-${companionName}-${index}`}
-                    className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-                  >
+                    className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
                     <td className="px-4 py-2">{player.name}</td>
                     <td className="px-4 py-2">{companionName}</td>
                     <td className="px-4 py-2">{weeksTogether}</td>
                   </tr>
-                ))
+                )),
               )}
             </tbody>
           </table>
@@ -221,17 +244,28 @@ const PlayerWeeksTogetherPage: React.FC = () => {
           <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
             <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
               <tr>
-                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('player', setSortConfigAll, sortConfigAll)}>Jogador</th>
-                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('companion', setSortConfigAll, sortConfigAll)}>Jogou com</th>
-                <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('weeksTogether', setSortConfigAll, sortConfigAll)}>Semanas Juntas</th>
+                <th
+                  className="px-4 py-2 text-left cursor-pointer"
+                  onClick={() => requestSort('player', setSortConfigAll, sortConfigAll)}>
+                  Jogador
+                </th>
+                <th
+                  className="px-4 py-2 text-left cursor-pointer"
+                  onClick={() => requestSort('companion', setSortConfigAll, sortConfigAll)}>
+                  Jogou com
+                </th>
+                <th
+                  className="px-4 py-2 text-left cursor-pointer"
+                  onClick={() => requestSort('weeksTogether', setSortConfigAll, sortConfigAll)}>
+                  Semanas Juntas
+                </th>
               </tr>
             </thead>
             <tbody>
               {sortedAllData.map((pair, index) => (
                 <tr
                   key={`${pair.player}-${pair.companion}-${index}`}
-                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-                >
+                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
                   <td className="px-4 py-2">{pair.player}</td>
                   <td className="px-4 py-2">{pair.companion}</td>
                   <td className="px-4 py-2">{pair.weeksTogether}</td>
@@ -240,7 +274,9 @@ const PlayerWeeksTogetherPage: React.FC = () => {
             </tbody>
           </table>
         ) : (
-          <p className="text-[hsl(var(--foreground))]">Nenhum jogador jogou 2 ou mais vezes junto.</p>
+          <p className="text-[hsl(var(--foreground))]">
+            Nenhum jogador jogou 2 ou mais vezes junto.
+          </p>
         )}
       </div>
     </div>

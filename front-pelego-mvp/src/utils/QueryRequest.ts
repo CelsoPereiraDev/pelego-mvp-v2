@@ -57,7 +57,9 @@ async function handleResponseError(response: Response, fallbackMessage: string):
 export class QueryRequest<ResponseType, PayloadType = undefined> {
   private baseUrl: string;
 
-  constructor(baseUrl: string = API_BASE_URL, _clientId?: string, _projectId?: string, _token?: string) {
+  constructor(
+    baseUrl: string = API_BASE_URL,
+  ) {
     this.baseUrl = baseUrl;
   }
 

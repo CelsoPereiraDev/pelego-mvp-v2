@@ -9,7 +9,6 @@ export const playerOverallSchema = z.object({
   physics: z.string().min(0).max(100),
 });
 
-
 export const playerGetOverallSchema = z.object({
   name: z.string().min(1, { message: 'Nome do jogador é obrigatório' }),
   country: z.string().optional(),
@@ -18,5 +17,3 @@ export const playerGetOverallSchema = z.object({
   position: z.enum(['MEI', 'ATK', 'DEF', 'GOL'], { message: 'Posição inválida' }),
   overall: playerOverallSchema,
 });
-
-

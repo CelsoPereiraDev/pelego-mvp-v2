@@ -1,4 +1,3 @@
-
 import { CreateWeekWithTeamsBody } from '@/types/match';
 import { useFut } from '@/contexts/FutContext';
 import { createWeekWithTeams } from './resources';

@@ -21,13 +21,28 @@ const PlayerParticipationByMonth: React.FC = () => {
 
   const { weeks, isLoading, isError } = useWeeksByDate(year.toString(), month?.toString());
 
-  const [playerParticipationList, setPlayerParticipationList] = useState<PlayerParticipationStats[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof PlayerParticipationStats; direction: 'asc' | 'desc' } | null>(null);
+  const [playerParticipationList, setPlayerParticipationList] = useState<
+    PlayerParticipationStats[]
+  >([]);
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof PlayerParticipationStats;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   function mapMonthNumberToText(monthNumber: number) {
     const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
     ];
     return months[monthNumber - 1];
   }
@@ -51,13 +66,17 @@ const PlayerParticipationByMonth: React.FC = () => {
 
       const totalWeeks = weeks.length;
 
-      const participationList: PlayerParticipationStats[] = Object.values(playerParticipationMap).map((player) => ({
+      const participationList: PlayerParticipationStats[] = Object.values(
+        playerParticipationMap,
+      ).map((player) => ({
         name: player.name,
         count: player.count,
         participation: (player.count / totalWeeks) * 100,
       }));
 
-      setPlayerParticipationList(participationList.sort((a, b) => b.participation - a.participation));
+      setPlayerParticipationList(
+        participationList.sort((a, b) => b.participation - a.participation),
+      );
     }
   }, [weeks, isLoading, isError]);
 
@@ -128,22 +147,33 @@ const PlayerParticipationByMonth: React.FC = () => {
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
             <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('name')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('count')}>Presenças</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('participation')}>Participação (%)</th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('name')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('count')}>
+                Presenças
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('participation')}>
+                Participação (%)
+              </th>
             </tr>
           </thead>
           <tbody>
-            {sortedStats.map((player, index) =>
-                <tr
-                  key={index}
-                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-                >
-                  <td className="px-4 py-2">{player.name}</td>
-                  <td className="px-4 py-2">{player.count}</td>
-                  <td className="px-4 py-2">{player.participation.toFixed(2)}%</td>
-                </tr>
-            )}
+            {sortedStats.map((player, index) => (
+              <tr
+                key={index}
+                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
+                <td className="px-4 py-2">{player.name}</td>
+                <td className="px-4 py-2">{player.count}</td>
+                <td className="px-4 py-2">{player.participation.toFixed(2)}%</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

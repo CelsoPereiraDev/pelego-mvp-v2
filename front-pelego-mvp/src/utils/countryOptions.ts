@@ -1,5 +1,3 @@
-
-
 export const countryOptions = [
   { value: 'AF', label: 'Afeganistão' },
   { value: 'ZA', label: 'África do Sul' },

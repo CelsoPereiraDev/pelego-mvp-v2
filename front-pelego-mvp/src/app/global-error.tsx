@@ -1,7 +1,7 @@
 'use client';
 
 export default function GlobalError({
-  error,
+  error, // eslint-disable-line @typescript-eslint/no-unused-vars
   reset,
 }: {
   error: Error & { digest?: string };
@@ -19,8 +19,7 @@ export default function GlobalError({
           </div>
           <button
             onClick={reset}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-          >
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
             Tentar novamente
           </button>
         </div>

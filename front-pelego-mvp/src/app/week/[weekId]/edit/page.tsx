@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,7 @@ import { useUpdateWeekAndMatches } from '@/services/matchs/useUpdateWeekAndMatch
 import { mapWeekToFormValues } from '@/mapper/defaultValueMatches';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+
 import { WeekPreview } from '@/components/WeekPreview';
 import { DatePickerWithShortcuts } from '@/components/DatePickerWithShortcuts';
 import { TeamBuilder } from '@/components/TeamBuilder';
@@ -57,9 +57,7 @@ export default function EditWeekPage() {
     }
   }, [week, players, reset]);
 
-  const {
-    fields: teamFields,
-  } = useFieldArray({
+  const { fields: teamFields } = useFieldArray({
     control,
     name: 'teams',
   });
@@ -73,22 +71,12 @@ export default function EditWeekPage() {
     name: 'matches',
   });
 
-  const watchedDate = watch('date');
   const watchedTeams = watch('teams');
-
-  const allSelectedPlayerIds = useMemo(() => {
-    return watchedTeams.flatMap((team) => team.players);
-  }, [watchedTeams]);
-
-  const availablePlayers = useMemo(() => {
-    return players?.filter((player) => !allSelectedPlayerIds.includes(player.id)) || [];
-  }, [players, allSelectedPlayerIds]);
 
   const teamsForMatches = useMemo(() => {
     return teamFields.map((team, index) => {
       const teamPlayerIds = watchedTeams[index]?.players || [];
-      const teamPlayers =
-        players?.filter((p) => teamPlayerIds.includes(p.id)) || [];
+      const teamPlayers = players?.filter((p) => teamPlayerIds.includes(p.id)) || [];
 
       return {
         id: index.toString(),
@@ -115,7 +103,9 @@ export default function EditWeekPage() {
         date: new Date(data.date).toISOString(),
         teams: data.teams.map((team) => team.players),
         matches: data.matches.map((match) => {
-          const mapGoals = (goals: { goals: number; playerId: string; ownGoalPlayerId?: string }[]) => {
+          const mapGoals = (
+            goals: { goals: number; playerId: string; ownGoalPlayerId?: string }[],
+          ) => {
             return goals
               .filter((goal) => goal.playerId)
               .map((goal) => {
@@ -145,8 +135,8 @@ export default function EditWeekPage() {
           return {
             homeTeamIndex: parseInt(match.homeTeamId),
             awayTeamIndex: parseInt(match.awayTeamId),
-            homeGoals: mapGoals(match.homeGoals.whoScores || []),
-            awayGoals: mapGoals(match.awayGoals.whoScores || []),
+            homeGoals: mapGoals((match.homeGoals.whoScores || []) as { goals: number; playerId: string; ownGoalPlayerId?: string }[]),
+            awayGoals: mapGoals((match.awayGoals.whoScores || []) as { goals: number; playerId: string; ownGoalPlayerId?: string }[]),
             homeAssists: mapAssists(match.homeAssists || []),
             awayAssists: mapAssists(match.awayAssists || []),
           };
@@ -189,225 +179,210 @@ export default function EditWeekPage() {
   }
 
   return (
-    <RoleGate allow={['admin']} fallback={
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
-        <p className="text-lg">Apenas administradores podem editar semanas.</p>
-      </div>
-    }>
-    <div className="container mx-auto py-8 px-4">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Link href={`/week/${weekId}`}>
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              </Link>
-              <h1 className="text-3xl font-bold">Editar Semana</h1>
-            </div>
-            <p className="text-muted-foreground">
-              Atualize a data, jogadores dos times e resultados das partidas
-            </p>
-          </div>
+    <RoleGate
+      allow={['admin']}
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
+          <p className="text-lg">Apenas administradores podem editar semanas.</p>
         </div>
+      }>
+      <div className="container mx-auto py-8 px-4">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Link href={`/week/${weekId}`}>
+                  <Button variant="ghost" size="icon">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <h1 className="text-3xl font-bold">Editar Semana</h1>
+              </div>
+              <p className="text-muted-foreground">
+                Atualize a data, jogadores dos times e resultados das partidas
+              </p>
+            </div>
+          </div>
 
-        {/* Date Selection */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5" />
-              Data da Semana
-            </CardTitle>
-            <CardDescription>
-              Altere a data em que as partidas foram jogadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Controller
-              control={control}
-              name="date"
-              render={({ field, fieldState }) => (
-                <DatePickerWithShortcuts
-                  value={field.value ? new Date(field.value) : undefined}
-                  onChange={(date) =>
-                    field.onChange(date?.toISOString().split('T')[0])
-                  }
-                  allowFutureDates={false}
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Teams and Matches */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Teams Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Times ({teamFields.length})
-                </CardTitle>
-                <CardDescription>
-                  Altere os jogadores de cada time. Não é permitido adicionar ou remover times.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {teamFields.map((field, index) => (
-                  <div key={field.id} className="space-y-2">
-                    <Controller
-                      control={control}
-                      name={`teams.${index}.players`}
-                      render={({ field: playersField, fieldState }) => {
-                        const otherTeamsPlayerIds = watchedTeams
-                          .filter((_, idx) => idx !== index)
-                          .flatMap((t) => t.players);
-
-                        const availableForThisTeam =
-                          players?.filter(
-                            (p) => !otherTeamsPlayerIds.includes(p.id)
-                          ) || [];
-
-                        return (
-                          <TeamBuilder
-                            teamIndex={index}
-                            selectedPlayerIds={playersField.value}
-                            availablePlayers={availableForThisTeam}
-                            onPlayersChange={playersField.onChange}
-                            error={fieldState.error?.message}
-                          />
-                        );
-                      }}
-                    />
-                  </div>
-                ))}
-
-                {errors.teams && (
-                  <p className="text-xs text-destructive">
-                    {typeof errors.teams === 'object' && 'message' in errors.teams
-                      ? (errors.teams as { message?: string }).message
-                      : 'Erro nos times'}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Matches Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
-                  Partidas
-                </CardTitle>
-                <CardDescription>
-                  Adicione, remova ou edite as partidas entre os times
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {matchFields.map((field, index) => (
-                  <MatchCardV2
-                    key={field.id}
-                    matchIndex={index}
-                    control={control}
-                    setValue={setValue}
-                    teams={teamsForMatches}
-                    onRemove={() => removeMatch(index)}
-                    canRemove={matchFields.length > 1}
+          {/* Date Selection */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                Data da Semana
+              </CardTitle>
+              <CardDescription>Altere a data em que as partidas foram jogadas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Controller
+                control={control}
+                name="date"
+                render={({ field, fieldState }) => (
+                  <DatePickerWithShortcuts
+                    value={field.value ? new Date(field.value) : undefined}
+                    onChange={(date) => field.onChange(date?.toISOString().split('T')[0])}
+                    allowFutureDates={false}
+                    error={fieldState.error?.message}
                   />
-                ))}
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Main Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Teams and Matches */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Teams Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Times ({teamFields.length})
+                  </CardTitle>
+                  <CardDescription>
+                    Altere os jogadores de cada time. Não é permitido adicionar ou remover times.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {teamFields.map((field, index) => (
+                    <div key={field.id} className="space-y-2">
+                      <Controller
+                        control={control}
+                        name={`teams.${index}.players`}
+                        render={({ field: playersField, fieldState }) => {
+                          const otherTeamsPlayerIds = watchedTeams
+                            .filter((_, idx) => idx !== index)
+                            .flatMap((t) => t.players);
+
+                          const availableForThisTeam =
+                            players?.filter((p) => !otherTeamsPlayerIds.includes(p.id)) || [];
+
+                          return (
+                            <TeamBuilder
+                              teamIndex={index}
+                              selectedPlayerIds={playersField.value}
+                              availablePlayers={availableForThisTeam}
+                              onPlayersChange={playersField.onChange}
+                              error={fieldState.error?.message}
+                            />
+                          );
+                        }}
+                      />
+                    </div>
+                  ))}
+
+                  {errors.teams && (
+                    <p className="text-xs text-destructive">
+                      {typeof errors.teams === 'object' && 'message' in errors.teams
+                        ? (errors.teams as { message?: string }).message
+                        : 'Erro nos times'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Matches Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Partidas
+                  </CardTitle>
+                  <CardDescription>
+                    Adicione, remova ou edite as partidas entre os times
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {matchFields.map((field, index) => (
+                    <MatchCardV2
+                      key={field.id}
+                      matchIndex={index}
+                      control={control}
+                      setValue={setValue}
+                      teams={teamsForMatches}
+                      onRemove={() => removeMatch(index)}
+                      canRemove={matchFields.length > 1}
+                    />
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddMatch}
+                    className="w-full"
+                    disabled={teamFields.length < 2}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Partida
+                  </Button>
+
+                  {errors.matches && (
+                    <div className="space-y-1">
+                      {typeof errors.matches === 'object' && 'message' in errors.matches && (
+                        <p className="text-xs text-destructive font-medium">
+                          {(errors.matches as { message?: string }).message}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Submit Button (Mobile) */}
+              <div className="lg:hidden">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={submitting || teamFields.length < 2}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Alterações
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Column: Preview (Desktop) */}
+            <div className="hidden lg:block">
+              <div className="sticky top-6 space-y-4">
+                <WeekPreview control={control} teams={teamFields} players={players || []} />
 
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddMatch}
+                  type="submit"
                   className="w-full"
-                  disabled={teamFields.length < 2}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Partida
+                  size="lg"
+                  disabled={submitting || teamFields.length < 2}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Alterações
+                    </>
+                  )}
                 </Button>
-
-                {errors.matches && (
-                  <div className="space-y-1">
-                    {typeof errors.matches === 'object' && 'message' in errors.matches && (
-                      <p className="text-xs text-destructive font-medium">
-                        {(errors.matches as { message?: string }).message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Submit Button (Mobile) */}
-            <div className="lg:hidden">
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={submitting || teamFields.length < 2}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Salvar Alterações
-                  </>
-                )}
-              </Button>
+              </div>
             </div>
           </div>
 
-          {/* Right Column: Preview (Desktop) */}
-          <div className="hidden lg:block">
-            <div className="sticky top-6 space-y-4">
-              <WeekPreview
-                control={control}
-                teams={teamFields}
-                players={players || []}
-              />
-
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={submitting || teamFields.length < 2}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Salvar Alterações
-                  </>
-                )}
-              </Button>
-            </div>
+          {/* Mobile Preview */}
+          <div className="lg:hidden mt-6">
+            <WeekPreview control={control} teams={teamFields} players={players || []} />
           </div>
-        </div>
-
-        {/* Mobile Preview */}
-        <div className="lg:hidden mt-6">
-          <WeekPreview
-            control={control}
-            teams={teamFields}
-            players={players || []}
-          />
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
     </RoleGate>
   );
 }

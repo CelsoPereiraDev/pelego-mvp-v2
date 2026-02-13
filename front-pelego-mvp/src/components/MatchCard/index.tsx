@@ -83,15 +83,11 @@ export const MatchCard = ({
 
   // Team options (disable already selected team)
   const homeTeamOptions = useMemo(() => {
-    return teams
-      .filter((t) => t.id !== awayTeamId)
-      .map((t) => ({ label: t.label, value: t.id }));
+    return teams.filter((t) => t.id !== awayTeamId).map((t) => ({ label: t.label, value: t.id }));
   }, [teams, awayTeamId]);
 
   const awayTeamOptions = useMemo(() => {
-    return teams
-      .filter((t) => t.id !== homeTeamId)
-      .map((t) => ({ label: t.label, value: t.id }));
+    return teams.filter((t) => t.id !== homeTeamId).map((t) => ({ label: t.label, value: t.id }));
   }, [teams, homeTeamId]);
 
   // Score options (0-10)
@@ -154,14 +150,7 @@ export const MatchCard = ({
     }
 
     return { completed, total, percentage: (completed / total) * 100 };
-  }, [
-    homeTeamId,
-    awayTeamId,
-    homeGoalsCount,
-    awayGoalsCount,
-    homeGoalScorers,
-    awayGoalScorers,
-  ]);
+  }, [homeTeamId, awayTeamId, homeGoalsCount, awayGoalsCount, homeGoalScorers, awayGoalScorers]);
 
   // Validation: Teams cannot be the same
   const hasSameTeamError = homeTeamId && awayTeamId && homeTeamId === awayTeamId;
@@ -203,8 +192,7 @@ export const MatchCard = ({
                 variant="ghost"
                 size="icon"
                 onClick={onRemove}
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              >
+                className="h-8 w-8 text-muted-foreground hover:text-destructive">
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}

@@ -3,7 +3,7 @@ import { QueryRequest } from '@/utils/QueryRequest';
 
 export async function createInvite(
   futId: string,
-  data: { role: 'user' | 'viewer'; expiresInDays?: number; maxUses?: number }
+  data: { role: 'user' | 'viewer'; expiresInDays?: number; maxUses?: number },
 ) {
   return new QueryRequest<InviteData, typeof data>().post(`futs/${futId}/invites`, data);
 }
@@ -21,5 +21,8 @@ export async function getInviteInfo(token: string) {
 }
 
 export async function acceptInvite(token: string) {
-  return new QueryRequest<{ futId: string; role: string }, Record<string, never>>().post(`invite/${token}/accept`, {});
+  return new QueryRequest<{ futId: string; role: string }, Record<string, never>>().post(
+    `invite/${token}/accept`,
+    {},
+  );
 }

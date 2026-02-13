@@ -1,5 +1,5 @@
-import { PlayerResponse } from "@/types/player";
-import { WeekResponse } from "@/types/weeks";
+import { PlayerResponse } from '@/types/player';
+import { WeekResponse } from '@/types/weeks';
 
 interface PlayerStatsSummary {
   playerName: string;
@@ -23,21 +23,22 @@ const initializePlayerStatsSummary = (player: PlayerResponse): PlayerStatsSummar
   averageGoalsConcededPerWeek: 0,
 });
 
-const updatePlayerStatsSummary = (
-  playerStats: PlayerStatsSummary,
-  goalsConceded: number
-) => {
+const updatePlayerStatsSummary = (playerStats: PlayerStatsSummary, goalsConceded: number) => {
   playerStats.matches += 1;
   playerStats.goalsConceded += goalsConceded;
 };
 
 const calculateAverageStatsSummary = (playerStatsMap: PlayerStatsSummaryMap) => {
-  Object.values(playerStatsMap).forEach(playerStats => {
+  Object.values(playerStatsMap).forEach((playerStats) => {
     if (playerStats.matches > 0) {
-      playerStats.averageGoalsConceded = parseFloat((playerStats.goalsConceded / playerStats.matches).toFixed(2));
+      playerStats.averageGoalsConceded = parseFloat(
+        (playerStats.goalsConceded / playerStats.matches).toFixed(2),
+      );
     }
     if (playerStats.weeksPlayed > 0) {
-      playerStats.averageGoalsConcededPerWeek = parseFloat(( playerStats.goalsConceded / playerStats.weeksPlayed).toFixed(2));
+      playerStats.averageGoalsConcededPerWeek = parseFloat(
+        (playerStats.goalsConceded / playerStats.weeksPlayed).toFixed(2),
+      );
     }
   });
 };
@@ -48,40 +49,42 @@ const calculatePlayersStatsSummary = (weeks: WeekResponse[]): PlayerStatsSummary
 
   weeks?.forEach((week) => {
     const playersInWeek = new Set<string>();
-    week.teams?.flatMap((team) => team.matchesHome?.concat(team.matchesAway) ?? []).forEach((match) => {
-      if (!processedMatches.has(match.id)) {
-        processedMatches.add(match.id);
+    week.teams
+      ?.flatMap((team) => team.matchesHome?.concat(team.matchesAway) ?? [])
+      .forEach((match) => {
+        if (!processedMatches.has(match.id)) {
+          processedMatches.add(match.id);
 
-        const homeTeam = week.teams?.find(team => team.id === match.homeTeamId);
-        const awayTeam = week.teams?.find(team => team.id === match.awayTeamId);
+          const homeTeam = week.teams?.find((team) => team.id === match.homeTeamId);
+          const awayTeam = week.teams?.find((team) => team.id === match.awayTeamId);
 
-        const allPlayers = new Set<PlayerResponse>();
-        homeTeam?.players?.forEach(member => allPlayers.add(member.player));
-        awayTeam?.players?.forEach(member => allPlayers.add(member.player));
-        match.goals?.forEach(goal => {
-          if (goal.player) allPlayers.add(goal.player);
-          if (goal.ownGoalPlayer) allPlayers.add(goal.ownGoalPlayer);
-        });
+          const allPlayers = new Set<PlayerResponse>();
+          homeTeam?.players?.forEach((member) => allPlayers.add(member.player));
+          awayTeam?.players?.forEach((member) => allPlayers.add(member.player));
+          match.goals?.forEach((goal) => {
+            if (goal.player) allPlayers.add(goal.player);
+            if (goal.ownGoalPlayer) allPlayers.add(goal.ownGoalPlayer);
+          });
 
-        allPlayers.forEach(player => {
-          if (!playerStatsMap[player.name]) {
-            playerStatsMap[player.name] = initializePlayerStatsSummary(player);
-          }
-          playersInWeek.add(player.name);
-        });
+          allPlayers.forEach((player) => {
+            if (!playerStatsMap[player.name]) {
+              playerStatsMap[player.name] = initializePlayerStatsSummary(player);
+            }
+            playersInWeek.add(player.name);
+          });
 
-        homeTeam?.players?.forEach(member => {
-          const playerName = member.player.name;
-          updatePlayerStatsSummary(playerStatsMap[playerName], match.result?.awayGoals ?? 0);
-        });
+          homeTeam?.players?.forEach((member) => {
+            const playerName = member.player.name;
+            updatePlayerStatsSummary(playerStatsMap[playerName], match.result?.awayGoals ?? 0);
+          });
 
-        awayTeam?.players?.forEach(member => {
-          const playerName = member.player.name;
-          updatePlayerStatsSummary(playerStatsMap[playerName], match.result?.homeGoals ?? 0);
-        });
-      }
-    });
-    playersInWeek.forEach(playerName => {
+          awayTeam?.players?.forEach((member) => {
+            const playerName = member.player.name;
+            updatePlayerStatsSummary(playerStatsMap[playerName], match.result?.homeGoals ?? 0);
+          });
+        }
+      });
+    playersInWeek.forEach((playerName) => {
       playerStatsMap[playerName].weeksPlayed += 1;
     });
   });

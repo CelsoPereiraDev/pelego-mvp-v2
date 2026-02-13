@@ -1,11 +1,8 @@
-'use client'
+'use client';
 
-import { calculatePlayerStatsForPlayer } from "@/mapper/allPlayersStatsMapper";
-import { usePlayer } from "@/services/player/usePlayer";
-import { useWeeks } from "@/services/weeks/useWeeks";
-import { calculateMonthResume } from "@/utils/calculateMonthResume";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { calculatePlayerStatsForPlayer } from '@/mapper/allPlayersStatsMapper';
+import { usePlayer } from '@/services/player/usePlayer';
+import { useWeeks } from '@/services/weeks/useWeeks';
 
 interface PlayerProps {
   params: {
@@ -13,104 +10,42 @@ interface PlayerProps {
   };
 }
 
-const translatePosition = (position: string) => {
-  switch (position) {
-    case "ATK":
-      return "Atacante";
-    case "MEI":
-      return "Meio Campista";
-    case "DEF":
-      return "Zagueiro";
-    case "GOL":
-      return "Goleiro";
-    default:
-      return "Desconhecida";
-  }
-};
-
-const formatMonthCategoryText = (count: number, category: string, months: string[]) => {
-  const joinedMonths = months.join(", ").replace(/, ([^,]*)$/, " e $1");
-  if (count === 1) {
-    return `${category} no mês de ${months[0]}`;
-  }
-  return `${category} nos meses de ${joinedMonths}`;
-};
-
 const formatRank = (rank: number | undefined) => {
-  if (rank === 1) return "1º Lugar";
-  if (rank === 2) return "2º Lugar";
-  if (rank === 3) return "3º Lugar";
-  if (rank >= 4 && rank <= 5) return "Top 5";
-  if (rank >= 6 && rank <= 10) return "Top 10";
+  if (rank === 1) return '1º Lugar';
+  if (rank === 2) return '2º Lugar';
+  if (rank === 3) return '3º Lugar';
+  if (rank !== undefined && rank >= 4 && rank <= 5) return 'Top 5';
+  if (rank !== undefined && rank >= 6 && rank <= 10) return 'Top 10';
   return null;
 };
 
 export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
   const { weeks } = useWeeks();
   const { player } = usePlayer(playerSlug);
-  const playerStats = calculatePlayerStatsForPlayer(weeks, player?.id);
-
-  const groupWeeksByMonth = (weeks: typeof weeks) => {
-    const weeksByMonth: Record<string, typeof weeks> = {};
-    weeks?.forEach(week => {
-      const month = format(parseISO(week.date), "MMMM", { locale: ptBR });
-      if (!weeksByMonth[month]) {
-        weeksByMonth[month] = [];
-      }
-      weeksByMonth[month].push(week);
-    });
-    return weeksByMonth;
-  };
-
-  const getMonthsInCategories = () => {
-    if (!weeks || !player) return {};
-
-    const weeksByMonth = groupWeeksByMonth(weeks);
-    const categories: Record<string, string[]> = {
-      assists: [],
-      scorer: [],
-      mvp: [],
-      lvp: [],
-      bestDefender: [],
-      topPointer: []
-    };
-
-    Object.entries(weeksByMonth).forEach(([month, monthWeeks]) => {
-      const monthResume = calculateMonthResume(monthWeeks);
-
-      if (monthResume.assists[0]?.name === player.name) categories.assists.push(month);
-      if (monthResume.scorer[0]?.name === player.name) categories.scorer.push(month);
-      if (monthResume.mvp[0]?.name === player.name) categories.mvp.push(month);
-      if (monthResume.lvp[0]?.name === player.name) categories.lvp.push(month);
-      if (monthResume.bestDefender[0]?.name === player.name) categories.bestDefender.push(month);
-      if (monthResume.topPointer[0]?.name === player.name) categories.topPointer.push(month);
-    });
-
-    return categories;
-  };
+  const playerStats = calculatePlayerStatsForPlayer(weeks, player?.id ?? '');
 
   const renderPrimaryStats = (stats: typeof playerStats) => {
     if (!stats || !player) return null;
 
     const statsEntries = [
-      { label: "Semanas", value: weeks?.length, rank: null },
+      { label: 'Semanas', value: weeks?.length, rank: null },
       {
-        label: "Jogos",
+        label: 'Jogos',
         value: stats.matches,
         rank: formatRank(stats.rankings?.matches),
       },
       {
-        label: "Gols Marcados",
+        label: 'Gols Marcados',
         value: stats.goals,
         rank: formatRank(stats.rankings?.goals),
       },
       {
-        label: "Assistências",
+        label: 'Assistências',
         value: stats.assists,
         rank: formatRank(stats.rankings?.assists),
       },
       {
-        label: "Gols Sofridos / Semana",
+        label: 'Gols Sofridos / Semana',
         value: stats.averageGoalsConcededPerWeek.toFixed(2),
         rank: formatRank(stats.rankings?.averageGoalsConcededPerWeek),
       },
@@ -119,31 +54,29 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
     return (
       <ul className="text-white text-lg sm:text-xl font-light mb-6 grid grid-cols-2 gap-4">
         {statsEntries
-          .filter(entry => entry.value !== null)
+          .filter((entry) => entry.value !== null)
           .map((entry, index) => (
             <li key={index} className="mb-4 flex justify-between flex-col">
               <span className="flex flex-row justify-between">
                 <span className="text-5xl">{entry.value}</span>
-               {entry.rank && (
-                <span
-                  className={`text-sm font-medium ${
-                    entry.rank.includes("1º Lugar")
-                      ? "text-yellow-300" // Dourado
-                      : entry.rank.includes("2º Lugar")
-                      ? "text-silver-400" // Prata (cinza claro)
-                      : entry.rank.includes("3º Lugar")
-                      ? "text-amber-500" // Bronze (âmbar)
-                      : entry.rank.includes("Top 5")
-                      ? "text-green-300" // Cinza claro
-                      : entry.rank.includes("Top 10")
-                      ? "text-purple-400" // Laranja
-                      : ""
-                  } mr-1`}
-                >
-                  {entry.rank}
-                </span>
-              )}
-                
+                {entry.rank && (
+                  <span
+                    className={`text-sm font-medium ${
+                      entry.rank.includes('1º Lugar')
+                        ? 'text-yellow-300' // Dourado
+                        : entry.rank.includes('2º Lugar')
+                          ? 'text-silver-400' // Prata (cinza claro)
+                          : entry.rank.includes('3º Lugar')
+                            ? 'text-amber-500' // Bronze (âmbar)
+                            : entry.rank.includes('Top 5')
+                              ? 'text-green-300' // Cinza claro
+                              : entry.rank.includes('Top 10')
+                                ? 'text-purple-400' // Laranja
+                                : ''
+                    } mr-1`}>
+                    {entry.rank}
+                  </span>
+                )}
               </span>
               <strong className="font-semibold">{entry.label}</strong>
             </li>
@@ -151,7 +84,6 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
       </ul>
     );
   };
-
 
   // const renderAchievements = () => {
   //   const monthsInCategories = getMonthsInCategories();
@@ -208,13 +140,16 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
   //   );
   // };
 
-  const renderTop5List = (title: string, list: Array<{ name: string; points: number; pointsExpected: number }>) => (
+  const renderTop5List = (
+    title: string,
+    list: Array<{ name: string; points: number; pointsExpected: number }>,
+  ) => (
     <div className="bg-white/10 rounded-lg p-4">
       <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
       <ul className="text-white text-xs">
         {list.slice(0, 3).map((item, index) => (
           <li key={index} className="mb-2">
-            <strong>{item.name}:</strong> {((item.points / item.pointsExpected) * 100).toFixed(2)}% 
+            <strong>{item.name}:</strong> {((item.points / item.pointsExpected) * 100).toFixed(2)}%
           </li>
         ))}
       </ul>
@@ -236,16 +171,19 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
         </section> */}
         <div className="flex flex-wrap justify-between gap-6">
           <section className="flex-1 min-w-[40%]">
-            {playerStats && renderTop5List("⬆ Parceiros", playerStats.top5PointsWithPlayers)}
+            {playerStats && renderTop5List('⬆ Parceiros', playerStats.top5PointsWithPlayers)}
           </section>
           <section className="flex-1 min-w-[40%]">
-            {playerStats && renderTop5List("⬇ Parceiros", playerStats.top5WorstPerformingTeammates)}
+            {playerStats &&
+              renderTop5List('⬇ Parceiros', playerStats.top5WorstPerformingTeammates)}
           </section>
           <section className="flex-1 min-w-[40%]">
-            {playerStats && renderTop5List("Pra quem mais perdi", playerStats.top5PointsAgainstPlayers)}
+            {playerStats &&
+              renderTop5List('Pra quem mais perdi', playerStats.top5PointsAgainstPlayers)}
           </section>
           <section className="flex-1 min-w-[40%]">
-            {playerStats && renderTop5List("De quem mais ganhei", playerStats.top5PointsGivenByPlayers)}
+            {playerStats &&
+              renderTop5List('De quem mais ganhei', playerStats.top5PointsGivenByPlayers)}
           </section>
         </div>
       </div>

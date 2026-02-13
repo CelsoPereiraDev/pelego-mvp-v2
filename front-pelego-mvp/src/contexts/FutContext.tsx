@@ -66,7 +66,7 @@ export function FutProvider({ children }: { children: ReactNode }) {
 
       // Try to restore from localStorage
       const savedFutId = localStorage.getItem(STORAGE_KEY);
-      const savedFut = savedFutId ? futsData.find(f => f.id === savedFutId) : null;
+      const savedFut = savedFutId ? futsData.find((f) => f.id === savedFutId) : null;
 
       if (savedFut) {
         setFutId(savedFut.id);
@@ -74,8 +74,10 @@ export function FutProvider({ children }: { children: ReactNode }) {
       } else {
         // Use primary fut or first available
         try {
-          const { primaryFutId } = await new QueryRequest<{ primaryFutId: string | null }>().get('user/primary-fut');
-          const primaryFut = primaryFutId ? futsData.find(f => f.id === primaryFutId) : null;
+          const { primaryFutId } = await new QueryRequest<{ primaryFutId: string | null }>().get(
+            'user/primary-fut',
+          );
+          const primaryFut = primaryFutId ? futsData.find((f) => f.id === primaryFutId) : null;
           const selectedFut = primaryFut || futsData[0];
           setFutId(selectedFut.id);
           setFutName(selectedFut.name);
@@ -106,7 +108,7 @@ export function FutProvider({ children }: { children: ReactNode }) {
     const loadRole = async () => {
       try {
         const members = await new QueryRequest<MemberData[]>().get(`futs/${futId}/members`);
-        const me = members.find(m => m.userId === user.uid);
+        const me = members.find((m) => m.userId === user.uid);
         setUserRole(me?.role || null);
       } catch {
         setUserRole(null);
@@ -120,39 +122,48 @@ export function FutProvider({ children }: { children: ReactNode }) {
     loadFuts();
   }, [loadFuts]);
 
-  const switchFut = useCallback((newFutId: string) => {
-    const fut = futs.find(f => f.id === newFutId);
-    if (fut) {
-      setFutId(fut.id);
-      setFutName(fut.name);
-      localStorage.setItem(STORAGE_KEY, fut.id);
-    }
-  }, [futs]);
+  const switchFut = useCallback(
+    (newFutId: string) => {
+      const fut = futs.find((f) => f.id === newFutId);
+      if (fut) {
+        setFutId(fut.id);
+        setFutName(fut.name);
+        localStorage.setItem(STORAGE_KEY, fut.id);
+      }
+    },
+    [futs],
+  );
 
-  const createFutFn = useCallback(async (name: string, description?: string): Promise<FutData> => {
-    const newFut = await new QueryRequest<FutData, { name: string; description?: string }>()
-      .post('futs', { name, description });
-    await loadFuts();
-    switchFut(newFut.id);
-    return newFut;
-  }, [loadFuts, switchFut]);
+  const createFutFn = useCallback(
+    async (name: string, description?: string): Promise<FutData> => {
+      const newFut = await new QueryRequest<FutData, { name: string; description?: string }>().post(
+        'futs',
+        { name, description },
+      );
+      await loadFuts();
+      switchFut(newFut.id);
+      return newFut;
+    },
+    [loadFuts, switchFut],
+  );
 
   const refreshFuts = useCallback(async () => {
     await loadFuts();
   }, [loadFuts]);
 
   return (
-    <FutContext.Provider value={{
-      futId,
-      futName,
-      userRole,
-      futs,
-      loading,
-      error,
-      switchFut,
-      createFut: createFutFn,
-      refreshFuts,
-    }}>
+    <FutContext.Provider
+      value={{
+        futId,
+        futName,
+        userRole,
+        futs,
+        loading,
+        error,
+        switchFut,
+        createFut: createFutFn,
+        refreshFuts,
+      }}>
       {children}
     </FutContext.Provider>
   );

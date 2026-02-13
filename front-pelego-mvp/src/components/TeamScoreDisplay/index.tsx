@@ -27,36 +27,24 @@ export const TeamScoreDisplay: React.FC<TeamScoreDisplayProps> = ({
       <span
         className={cn(
           'text-sm font-medium transition-colors',
-          homeWinning && 'text-primary font-semibold'
-        )}
-      >
+          homeWinning && 'text-primary font-semibold',
+        )}>
         {homeTeamName}
       </span>
       <div className="flex items-center gap-2 text-lg font-bold">
-        <span
-          className={cn(
-            'min-w-[2ch] text-center',
-            homeWinning && 'text-primary'
-          )}
-        >
+        <span className={cn('min-w-[2ch] text-center', homeWinning && 'text-primary')}>
           {homeScore}
         </span>
         <span className="text-muted-foreground">x</span>
-        <span
-          className={cn(
-            'min-w-[2ch] text-center',
-            awayWinning && 'text-primary'
-          )}
-        >
+        <span className={cn('min-w-[2ch] text-center', awayWinning && 'text-primary')}>
           {awayScore}
         </span>
       </div>
       <span
         className={cn(
           'text-sm font-medium transition-colors',
-          awayWinning && 'text-primary font-semibold'
-        )}
-      >
+          awayWinning && 'text-primary font-semibold',
+        )}>
         {awayTeamName}
       </span>
     </div>

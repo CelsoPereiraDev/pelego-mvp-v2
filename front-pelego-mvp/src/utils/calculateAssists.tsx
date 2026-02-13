@@ -1,5 +1,5 @@
-import { PlayerResponse } from "@/types/player";
-import { WeekResponse } from "@/types/weeks";
+import { PlayerResponse } from '@/types/player';
+import { WeekResponse } from '@/types/weeks';
 
 export interface SimpleAssistStats {
   name: string;
@@ -12,41 +12,45 @@ export const calculateSimpleAssistStats = (weeks: WeekResponse[]): SimpleAssistS
   const processedMatches = new Set<string>(); // Para rastrear partidas já processadas
 
   weeks?.forEach((week) => {
-    week.teams?.flatMap((team) => team.matchesHome?.concat(team.matchesAway) ?? []).forEach((match) => {
-      if (!processedMatches.has(match.id)) {
-        processedMatches.add(match.id); // Marca a partida como processada
+    week.teams
+      ?.flatMap((team) => team.matchesHome?.concat(team.matchesAway) ?? [])
+      .forEach((match) => {
+        if (!processedMatches.has(match.id)) {
+          processedMatches.add(match.id); // Marca a partida como processada
 
-        const allPlayers = new Set<PlayerResponse>();
+          const allPlayers = new Set<PlayerResponse>();
 
-        // Adiciona todos os jogadores que participaram da partida (independente de assistência)
-        match.homeTeamId && week.teams
-          ?.find(team => team.id === match.homeTeamId)
-          ?.players?.forEach(member => allPlayers.add(member.player));
+          // Adiciona todos os jogadores que participaram da partida (independente de assistência)
+          match.homeTeamId &&
+            week.teams
+              ?.find((team) => team.id === match.homeTeamId)
+              ?.players?.forEach((member) => allPlayers.add(member.player));
 
-        match.awayTeamId && week.teams
-          ?.find(team => team.id === match.awayTeamId)
-          ?.players?.forEach(member => allPlayers.add(member.player));
+          match.awayTeamId &&
+            week.teams
+              ?.find((team) => team.id === match.awayTeamId)
+              ?.players?.forEach((member) => allPlayers.add(member.player));
 
-        // Inicializa os jogadores no mapa de assistências
-        allPlayers.forEach((player) => {
-          if (!assistStatsMap[player.id]) {
-            assistStatsMap[player.id] = {
-              name: player.name,
-              assists: 0,
-              matchesPlayed: 0, // Inicializa o número total de partidas
-            };
-          }
-          assistStatsMap[player.id].matchesPlayed += 1; // Incrementa o total de partidas jogadas
-        });
+          // Inicializa os jogadores no mapa de assistências
+          allPlayers.forEach((player) => {
+            if (!assistStatsMap[player.id]) {
+              assistStatsMap[player.id] = {
+                name: player.name,
+                assists: 0,
+                matchesPlayed: 0, // Inicializa o número total de partidas
+              };
+            }
+            assistStatsMap[player.id].matchesPlayed += 1; // Incrementa o total de partidas jogadas
+          });
 
-        // Adiciona as assistências feitas na partida
-        match.assists?.forEach((assist) => {
-          if (assist.playerId) {
-            assistStatsMap[assist.playerId].assists += assist.assists;
-          }
-        });
-      }
-    });
+          // Adiciona as assistências feitas na partida
+          match.assists?.forEach((assist) => {
+            if (assist.playerId) {
+              assistStatsMap[assist.playerId].assists += assist.assists;
+            }
+          });
+        }
+      });
   });
 
   // Converte para array e aplica a ordenação com critério de desempate
@@ -59,4 +63,3 @@ export const calculateSimpleAssistStats = (weeks: WeekResponse[]): SimpleAssistS
 
   return sortedAssistStats;
 };
-

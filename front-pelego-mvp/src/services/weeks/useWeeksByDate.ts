@@ -84,15 +84,19 @@ export function useWeeksByDate(year: string, month?: string) {
               getDocs(collection(db, `${weeksPath}/${weekId}/matches`)),
             ]);
 
-            const teamsData: Array<{ id: string; data: DocumentData }> = teamsSnapshot.docs.map(d => ({
-              id: d.id,
-              data: d.data(),
-            }));
+            const teamsData: Array<{ id: string; data: DocumentData }> = teamsSnapshot.docs.map(
+              (d) => ({
+                id: d.id,
+                data: d.data(),
+              }),
+            );
 
-            const matchesData: Array<{ id: string; data: DocumentData }> = matchesSnapshot.docs.map(d => ({
-              id: d.id,
-              data: d.data(),
-            }));
+            const matchesData: Array<{ id: string; data: DocumentData }> = matchesSnapshot.docs.map(
+              (d) => ({
+                id: d.id,
+                data: d.data(),
+              }),
+            );
 
             return buildWeekResponse(weekId, weekData, teamsData, matchesData, playersMap);
           }),

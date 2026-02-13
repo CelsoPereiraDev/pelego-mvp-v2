@@ -29,19 +29,29 @@ const MonthResume: React.FC = () => {
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
 
   // Get excluded player IDs
-  const excludedPlayerIds = selectedPlayers.map(player => player.id);
+  const excludedPlayerIds = selectedPlayers.map((player) => player.id);
 
   // Call backend API with excluded player IDs
   const { monthResume, isLoading, error } = useMonthResume(
     year.toString(),
     month?.toString(),
-    excludedPlayerIds
+    excludedPlayerIds,
   );
 
   function mapMonthNumberToText(monthNumber: number) {
     const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
     ];
     return months[monthNumber - 1];
   }
@@ -58,34 +68,70 @@ const MonthResume: React.FC = () => {
 
   const chartConfig: ChartConfig = {
     max: {
-      label: "Valor Máximo",
-      color: "hsl(261.2 72.6% 22.9%)",
+      label: 'Valor Máximo',
+      color: 'hsl(261.2 72.6% 22.9%)',
     },
     secondHighest: {
-      label: "Segundo Valor Mais Alto",
-      color: "hsl(263.5 67.4% 34.9%)",
+      label: 'Segundo Valor Mais Alto',
+      color: 'hsl(263.5 67.4% 34.9%)',
     },
     thirdHighest: {
-      label: "Terceiro Valor Mais Alto",
-      color: "hsl(263.4 69.3% 42.2%)",
+      label: 'Terceiro Valor Mais Alto',
+      color: 'hsl(263.4 69.3% 42.2%)',
     },
     fourthHighest: {
-      label: "Quarto Valor Mais Alto",
-      color: "hsl(263.4 70% 50.4%)",
+      label: 'Quarto Valor Mais Alto',
+      color: 'hsl(263.4 70% 50.4%)',
     },
     fifthHighest: {
-      label: "Quinto Valor Mais Alto",
-      color: "hsl(262.1 83.3% 57.8%)",
+      label: 'Quinto Valor Mais Alto',
+      color: 'hsl(262.1 83.3% 57.8%)',
     },
   };
 
   const categories = [
-    { key: 'assists', title: <span className='mt-[2px]'>Assistências</span>, order: 'desc',  description: 'Quantidade de assistências', icon: <AutoAwesomeIcon className='text-[hsl(var(--light-hover))]'/> },
-    { key: 'scorer', title: <span className='mt-[2px]'>Artilheiros</span>, order: 'desc', description: 'Quantidade de gols marcados',icon: <SportsSoccerIcon className='text-[hsl(var(--light-hover))]'/>},
-    { key: 'mvp', title: <span className='mt-[2px]'>MVP</span>, order: 'desc', description: 'Quantidade de vezes que foi campeão da semana', icon: <EmojiEventsIcon className='text-[hsl(var(--light-hover))]'/> },
-    { key: 'lvp', title: <span className='mt-[2px]'>LVP</span>, order: 'asc' , description: 'Porcentagem de aproveitamento' ,icon: <BatteryAlertIcon className='text-[hsl(var(--light-hover))]'/>},
-    { key: 'bestDefender', title: <span className='mt-[2px]'>Melhor Defensor</span>, order: 'asc' ,description: 'Média de gols sofridos por partida' , icon: <LocalPoliceIcon className='text-[hsl(var(--light-hover))]'/>},
-    { key: 'topPointer', title: <span className='mt-[2px]'>Maior Pontuador</span>, order: 'desc' ,description: 'Quantidade de pontos feitos',icon: <StarIcon className='text-[hsl(var(--light-hover))]'/>},
+    {
+      key: 'assists',
+      title: <span className="mt-[2px]">Assistências</span>,
+      order: 'desc',
+      description: 'Quantidade de assistências',
+      icon: <AutoAwesomeIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'scorer',
+      title: <span className="mt-[2px]">Artilheiros</span>,
+      order: 'desc',
+      description: 'Quantidade de gols marcados',
+      icon: <SportsSoccerIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'mvp',
+      title: <span className="mt-[2px]">MVP</span>,
+      order: 'desc',
+      description: 'Quantidade de vezes que foi campeão da semana',
+      icon: <EmojiEventsIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'lvp',
+      title: <span className="mt-[2px]">LVP</span>,
+      order: 'asc',
+      description: 'Porcentagem de aproveitamento',
+      icon: <BatteryAlertIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'bestDefender',
+      title: <span className="mt-[2px]">Melhor Defensor</span>,
+      order: 'asc',
+      description: 'Média de gols sofridos por partida',
+      icon: <LocalPoliceIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'topPointer',
+      title: <span className="mt-[2px]">Maior Pontuador</span>,
+      order: 'desc',
+      description: 'Quantidade de pontos feitos',
+      icon: <StarIcon className="text-[hsl(var(--light-hover))]" />,
+    },
   ];
 
   const goToPreviousMonth = () => {
@@ -112,7 +158,9 @@ const MonthResume: React.FC = () => {
     router.push(`/stat-resume/${newYear}/${String(newMonth).padStart(2, '0')}`);
   };
 
-  const availablePlayers = players?.filter(player => !selectedPlayers.some(selected => selected.name === player.name));
+  const availablePlayers = players?.filter(
+    (player) => !selectedPlayers.some((selected) => selected.name === player.name),
+  );
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] w-full flex flex-col items-center p-8 gap-12">
@@ -127,70 +175,73 @@ const MonthResume: React.FC = () => {
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
-      
-      <div className='grid grid-cols-3 gap-4'>
+
+      <div className="grid grid-cols-3 gap-4">
         {categories.map((category) => {
-  let sortedData = monthResume[category.key as keyof typeof monthResume]
-    .map(item => ({
-      name: item.name,
-      value: item.count,
-      fill: chartConfig.max.color || 'hsl(261.2 72.6% 22.9%)' // Cor padrão
-    }));
+          let sortedData = monthResume[category.key as keyof typeof monthResume].map((item) => ({
+            name: item.name,
+            value: item.count,
+            fill: chartConfig.max.color || 'hsl(261.2 72.6% 22.9%)', // Cor padrão
+          }));
 
-  // Ordena os dados de acordo com a configuração da categoria
-  if (category.order === 'asc') {
-    sortedData = sortedData.sort((a, b) => a.value - b.value);
-  } else {
-    sortedData = sortedData.sort((a, b) => b.value - a.value);
-  }
+          // Ordena os dados de acordo com a configuração da categoria
+          if (category.order === 'asc') {
+            sortedData = sortedData.sort((a, b) => a.value - b.value);
+          } else {
+            sortedData = sortedData.sort((a, b) => b.value - a.value);
+          }
 
-  // Remover duplicatas com base no nome do jogador
-  const uniqueData = sortedData.filter((item, index, self) =>
-    index === self.findIndex((t) => t.name === item.name)
-  );
+          // Remover duplicatas com base no nome do jogador
+          const uniqueData = sortedData.filter(
+            (item, index, self) => index === self.findIndex((t) => t.name === item.name),
+          );
 
-  let lastValue = null;
-  let lastColorIndex = -1;
+          let lastValue: number | null = null;
+          let lastColorIndex = -1;
 
-  uniqueData.forEach((item, index) => {
-    if (item.value !== lastValue) {
-      lastColorIndex = index;
-    }
-    if (lastColorIndex === 0) item.fill = chartConfig.max.color || 'hsl(261.2 72.6% 22.9%)';
-    else if (lastColorIndex === 1) item.fill = chartConfig.secondHighest.color || 'hsl(263.5 67.4% 34.9%)';
-    else if (lastColorIndex === 2) item.fill = chartConfig.thirdHighest.color || 'hsl(263.4 69.3% 42.2%)';
-    else if (lastColorIndex === 3) item.fill = chartConfig.fourthHighest.color || 'hsl(263.4 70% 50.4%)';
-    else item.fill = chartConfig.fifthHighest.color || 'hsl(262.1 83.3% 57.8%)';
+          uniqueData.forEach((item, index) => {
+            if (item.value !== lastValue) {
+              lastColorIndex = index;
+            }
+            if (lastColorIndex === 0) item.fill = chartConfig.max.color || 'hsl(261.2 72.6% 22.9%)';
+            else if (lastColorIndex === 1)
+              item.fill = chartConfig.secondHighest.color || 'hsl(263.5 67.4% 34.9%)';
+            else if (lastColorIndex === 2)
+              item.fill = chartConfig.thirdHighest.color || 'hsl(263.4 69.3% 42.2%)';
+            else if (lastColorIndex === 3)
+              item.fill = chartConfig.fourthHighest.color || 'hsl(263.4 70% 50.4%)';
+            else item.fill = chartConfig.fifthHighest.color || 'hsl(262.1 83.3% 57.8%)';
 
-    lastValue = item.value;
-  });
+            lastValue = item.value;
+          });
 
-  return (
-    <ChartBar
-      key={category.key}
-      title={
-        <span className='flex flex-row gap-3'>
-        {category.icon}
-        {category.title}
-        </span>
-      }
-      description={category.description}
-      chartData={uniqueData} // Usar dados sem duplicatas
-      chartConfig={chartConfig}
-    />
-  );
-})}
+          return (
+            <ChartBar
+              key={category.key}
+              title={
+                <span className="flex flex-row gap-3">
+                  {category.icon}
+                  {category.title}
+                </span>
+              }
+              description={category.description}
+              chartData={uniqueData} // Usar dados sem duplicatas
+              chartConfig={chartConfig}
+            />
+          );
+        })}
 
         <SelectWithSearch
-            isMulti
-            placeholder='Jogadores'
-            options={availablePlayers?.map(player => ({ label: player.name, value: player }))}
-            value={selectedPlayers.map(player => ({ label: player.name, value: player }))}
-            onChange={(selectedOptions) => setSelectedPlayers(selectedOptions.map((option: {
-              label: string;
-              value: Player;
-          }) => option.value))}
-          />
+          isMulti
+          placeholder="Jogadores"
+          options={availablePlayers?.map((player) => ({ label: player.name, value: player }))}
+          value={selectedPlayers.map((player) => ({ label: player.name, value: player }))}
+          onChange={(selectedOptions) =>
+            setSelectedPlayers(
+              selectedOptions.map((option: { label: string; value: Player }) => option.value),
+            )
+          }
+        />
       </div>
     </div>
   );

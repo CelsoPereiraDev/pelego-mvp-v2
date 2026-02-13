@@ -8,7 +8,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
-
 const PlayerStatsPage: React.FC = () => {
   const router = useRouter();
   const params = useParams();
@@ -16,12 +15,25 @@ const PlayerStatsPage: React.FC = () => {
   const month = params.month ? parseInt(params.month as string, 10) : undefined;
   const { weeks, isLoading, isError } = useWeeksByDate(year.toString(), month?.toString());
   const [playerStats, setPlayerStats] = useState<SimplePlayerStats[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof SimplePlayerStats; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof SimplePlayerStats;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   function mapMonthNumberToText(monthNumber: number) {
     const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
     ];
     return months[monthNumber - 1];
   }
@@ -105,17 +117,43 @@ const PlayerStatsPage: React.FC = () => {
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
             <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('name')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('points')}>Pontos</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('wins')}>Vitórias</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('draws')}>Empates</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('losses')}>Derrotas</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('pointsPercentage')}>Porcentagem de Pontos</th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('name')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('points')}>
+                Pontos
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('wins')}>
+                Vitórias
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('draws')}>
+                Empates
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('losses')}>
+                Derrotas
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('pointsPercentage')}>
+                Porcentagem de Pontos
+              </th>
             </tr>
           </thead>
           <tbody>
             {sortedStats.map(({ name, points, wins, draws, losses, pointsPercentage }, index) => (
-              <tr key={index} className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
+              <tr
+                key={index}
+                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
                 <td className="px-4 py-2">{name}</td>
                 <td className="px-4 py-2">{points}</td>
                 <td className="px-4 py-2">{wins}</td>

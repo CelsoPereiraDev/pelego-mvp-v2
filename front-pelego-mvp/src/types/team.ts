@@ -1,10 +1,10 @@
-import { TeamMember } from "./match";
-import { Player } from "./player";
+import { TeamMember } from './match';
+import { Player } from './player';
 
 export interface Team {
-    players: Player[];
-    overall: number;
-    id: number; 
+  players: Player[];
+  overall: number;
+  id: number;
 }
 
 export interface TeamPlayerResponse {
@@ -12,8 +12,6 @@ export interface TeamPlayerResponse {
   name: string;
   isChampion: boolean;
 }
-
-
 
 export interface WeekTeamResponse {
   id: string;

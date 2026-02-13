@@ -5,12 +5,7 @@ import { PlayerResponse } from '@/types/player';
 import { useFut } from '@/contexts/FutContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import {
-  doc,
-  collection,
-  onSnapshot,
-  DocumentData,
-} from 'firebase/firestore';
+import { doc, collection, onSnapshot, DocumentData } from 'firebase/firestore';
 import { buildWeekResponse } from '@/services/firestore/converters';
 import { deleteWeek } from './resources';
 
@@ -86,7 +81,7 @@ export function useWeek(weekId: string) {
     const unsubTeams = onSnapshot(
       collection(db, `${basePath}/teams`),
       (snapshot) => {
-        teamsData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
+        teamsData = snapshot.docs.map((d) => ({ id: d.id, data: d.data() }));
         teamsReady = true;
         tryBuild();
       },
@@ -101,7 +96,7 @@ export function useWeek(weekId: string) {
     const unsubMatches = onSnapshot(
       collection(db, `${basePath}/matches`),
       (snapshot) => {
-        matchesData = snapshot.docs.map(d => ({ id: d.id, data: d.data() }));
+        matchesData = snapshot.docs.map((d) => ({ id: d.id, data: d.data() }));
         matchesReady = true;
         tryBuild();
       },
@@ -119,9 +114,32 @@ export function useWeek(weekId: string) {
         const map = new Map<string, PlayerResponse>();
         for (const d of snapshot.docs) {
           const pd = d.data();
-          const overall = typeof pd.overall === 'string'
-            ? (() => { try { return JSON.parse(pd.overall); } catch { return { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 }; } })()
-            : pd.overall || { pace: 0, shooting: 0, passing: 0, dribble: 0, defense: 0, physics: 0, overall: 0 };
+          const overall =
+            typeof pd.overall === 'string'
+              ? (() => {
+                  try {
+                    return JSON.parse(pd.overall);
+                  } catch {
+                    return {
+                      pace: 0,
+                      shooting: 0,
+                      passing: 0,
+                      dribble: 0,
+                      defense: 0,
+                      physics: 0,
+                      overall: 0,
+                    };
+                  }
+                })()
+              : pd.overall || {
+                  pace: 0,
+                  shooting: 0,
+                  passing: 0,
+                  dribble: 0,
+                  defense: 0,
+                  physics: 0,
+                  overall: 0,
+                };
 
           map.set(d.id, {
             id: d.id,

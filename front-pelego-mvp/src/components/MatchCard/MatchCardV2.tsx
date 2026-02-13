@@ -41,8 +41,8 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
 
   // Clean goal/assist data when teams change
   useEffect(() => {
-    const homeTeamPlayers = homeTeam?.players.map(p => p.id) || [];
-    const awayTeamPlayers = awayTeam?.players.map(p => p.id) || [];
+    const homeTeamPlayers = homeTeam?.players.map((p) => p.id) || [];
+    const awayTeamPlayers = awayTeam?.players.map((p) => p.id) || [];
 
     // Check and clean home goal scorers
     if (homeGoalScorers && homeGoalScorers.length > 0) {
@@ -57,7 +57,11 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
         }
 
         // Check if own goal player is still in opposing team
-        if (scorer.playerId === 'GC' && scorer.ownGoalPlayerId && !awayTeamPlayers.includes(scorer.ownGoalPlayerId)) {
+        if (
+          scorer.playerId === 'GC' &&
+          scorer.ownGoalPlayerId &&
+          !awayTeamPlayers.includes(scorer.ownGoalPlayerId)
+        ) {
           needsCleanup = true;
           return { ...scorer, ownGoalPlayerId: '' };
         }
@@ -83,7 +87,11 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
         }
 
         // Check if own goal player is still in opposing team
-        if (scorer.playerId === 'GC' && scorer.ownGoalPlayerId && !homeTeamPlayers.includes(scorer.ownGoalPlayerId)) {
+        if (
+          scorer.playerId === 'GC' &&
+          scorer.ownGoalPlayerId &&
+          !homeTeamPlayers.includes(scorer.ownGoalPlayerId)
+        ) {
           needsCleanup = true;
           return { ...scorer, ownGoalPlayerId: '' };
         }
@@ -95,19 +103,24 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
         setValue(`matches.${matchIndex}.awayGoals.whoScores`, cleanedScorers);
       }
     }
-  }, [homeTeamId, awayTeamId, homeTeam, awayTeam, homeGoalScorers, awayGoalScorers, matchIndex, setValue]);
+  }, [
+    homeTeamId,
+    awayTeamId,
+    homeTeam,
+    awayTeam,
+    homeGoalScorers,
+    awayGoalScorers,
+    matchIndex,
+    setValue,
+  ]);
 
   // Team options (disable already selected team)
   const homeTeamOptions = useMemo<SelectOption[]>(() => {
-    return teams
-      .filter((t) => t.id !== awayTeamId)
-      .map((t) => ({ label: t.label, value: t.id }));
+    return teams.filter((t) => t.id !== awayTeamId).map((t) => ({ label: t.label, value: t.id }));
   }, [teams, awayTeamId]);
 
   const awayTeamOptions = useMemo<SelectOption[]>(() => {
-    return teams
-      .filter((t) => t.id !== homeTeamId)
-      .map((t) => ({ label: t.label, value: t.id }));
+    return teams.filter((t) => t.id !== homeTeamId).map((t) => ({ label: t.label, value: t.id }));
   }, [teams, homeTeamId]);
 
   // Score options (1-10, not 0)
@@ -176,14 +189,7 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
     }
 
     return { completed, total, percentage: (completed / total) * 100 };
-  }, [
-    homeTeamId,
-    awayTeamId,
-    homeGoalsCount,
-    awayGoalsCount,
-    homeGoalScorers,
-    awayGoalScorers,
-  ]);
+  }, [homeTeamId, awayTeamId, homeGoalsCount, awayGoalsCount, homeGoalScorers, awayGoalScorers]);
 
   // Validation: Teams cannot be the same
   const hasSameTeamError = homeTeamId && awayTeamId && homeTeamId === awayTeamId;
@@ -228,8 +234,7 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={onRemove}
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              >
+                className="h-8 w-8 text-muted-foreground hover:text-destructive">
                 <Trash2 className="w-4 h-4" />
               </Button>
             )}
@@ -313,9 +318,7 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor={`match-${matchIndex}-home-score`}>
-                  Gols {homeTeam.label}
-                </Label>
+                <Label htmlFor={`match-${matchIndex}-home-score`}>Gols {homeTeam.label}</Label>
                 <Controller
                   control={control}
                   name={`matches.${matchIndex}.homeGoals.goalsCount`}
@@ -337,9 +340,7 @@ export const MatchCardV2: React.FC<MatchCardProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor={`match-${matchIndex}-away-score`}>
-                  Gols {awayTeam.label}
-                </Label>
+                <Label htmlFor={`match-${matchIndex}-away-score`}>Gols {awayTeam.label}</Label>
                 <Controller
                   control={control}
                   name={`matches.${matchIndex}.awayGoals.goalsCount`}

@@ -16,7 +16,12 @@ import { useEffect, useState } from 'react';
 export interface FirestoreCollectionOptions {
   orderByField?: string;
   orderDirection?: 'asc' | 'desc';
-  whereConstraints?: Array<{ field: string; op: '<' | '<=' | '==' | '>=' | '>' | '!=' | 'array-contains'; value: any }>;
+  whereConstraints?: Array<{
+    field: string;
+    op: '<' | '<=' | '==' | '>=' | '>' | '!=' | 'array-contains';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: any;
+  }>;
 }
 
 export interface FirestoreCollectionResult<T> {
@@ -60,7 +65,7 @@ export function useFirestoreCollection<T = DocumentData>(
     const unsubscribe = onSnapshot(
       q,
       (snapshot: QuerySnapshot) => {
-        const docs = snapshot.docs.map(doc => converter(doc.data(), doc.id));
+        const docs = snapshot.docs.map((doc) => converter(doc.data(), doc.id));
         setData(docs);
         setLoading(false);
         setError(null);
@@ -73,7 +78,12 @@ export function useFirestoreCollection<T = DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [collectionPath, options?.orderByField, options?.orderDirection, JSON.stringify(options?.whereConstraints)]);
+  }, [
+    collectionPath,
+    options?.orderByField,
+    options?.orderDirection,
+    JSON.stringify(options?.whereConstraints),
+  ]);
 
   return { data, loading, error };
 }

@@ -1,4 +1,4 @@
-import { PlayerResponse } from "@/types/player";
+import { PlayerResponse } from '@/types/player';
 
 export interface AssistDetails {
   playerId: string;
@@ -20,7 +20,7 @@ export interface MatchResponse {
   result?: MatchResultResponse;
   goals: GoalResponse[];
   assists: AssistResponse[];
-  orderIndex?: number
+  orderIndex?: number;
 }
 
 export interface CreateMatchDataRequested {
@@ -90,9 +90,9 @@ export type CreateMatch = {
       }[];
     };
     homeAssists: {
-        assists: number;
-        playerId: string;
-      }[];
+      assists: number;
+      playerId: string;
+    }[];
     awayGoals: {
       goalsCount: string;
       whoScores: {
@@ -102,9 +102,9 @@ export type CreateMatch = {
       }[];
     };
     awayAssists: {
-        assists: number;
-        playerId: string;
-      }[];
+      assists: number;
+      playerId: string;
+    }[];
     awayTeamId: string;
   }[];
 };

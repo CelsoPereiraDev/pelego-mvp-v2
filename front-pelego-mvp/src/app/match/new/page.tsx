@@ -68,26 +68,13 @@ export default function NewMatchPageV2() {
     name: 'matches',
   });
 
-  const watchedDate = watch('date');
   const watchedTeams = watch('teams');
-  const watchedMatches = watch('matches');
-
-  // Get all selected player IDs across all teams
-  const allSelectedPlayerIds = useMemo(() => {
-    return watchedTeams.flatMap((team) => team.players);
-  }, [watchedTeams]);
-
-  // Available players (not in any team yet)
-  const availablePlayers = useMemo(() => {
-    return players?.filter((player) => !allSelectedPlayerIds.includes(player.id)) || [];
-  }, [players, allSelectedPlayerIds]);
 
   // Transform teams for MatchCard component
   const teamsForMatches = useMemo(() => {
     return teamFields.map((team, index) => {
       const teamPlayerIds = watchedTeams[index]?.players || [];
-      const teamPlayers =
-        players?.filter((p) => teamPlayerIds.includes(p.id)) || [];
+      const teamPlayers = players?.filter((p) => teamPlayerIds.includes(p.id)) || [];
 
       return {
         id: index.toString(),
@@ -120,7 +107,9 @@ export default function NewMatchPageV2() {
         teams: data.teams.map((team) => team.players),
         matches: data.matches.map((match) => {
           // Map goals - each entry = 1 goal, no grouping needed
-          const mapGoals = (goals: { goals: number; playerId: string; ownGoalPlayerId?: string }[]) => {
+          const mapGoals = (
+            goals: { goals: number; playerId: string; ownGoalPlayerId?: string }[],
+          ) => {
             return goals
               .filter((goal) => goal.playerId) // Only valid goals with playerId
               .map((goal) => {
@@ -152,8 +141,8 @@ export default function NewMatchPageV2() {
           return {
             homeTeamIndex: parseInt(match.homeTeamId),
             awayTeamIndex: parseInt(match.awayTeamId),
-            homeGoals: mapGoals(match.homeGoals.whoScores || []),
-            awayGoals: mapGoals(match.awayGoals.whoScores || []),
+            homeGoals: mapGoals((match.homeGoals.whoScores || []) as { goals: number; playerId: string; ownGoalPlayerId?: string }[]),
+            awayGoals: mapGoals((match.awayGoals.whoScores || []) as { goals: number; playerId: string; ownGoalPlayerId?: string }[]),
             homeAssists: mapAssists(match.homeAssists || []),
             awayAssists: mapAssists(match.awayAssists || []),
           };
@@ -188,255 +177,246 @@ export default function NewMatchPageV2() {
   }
 
   return (
-    <RoleGate allow={['admin']} fallback={
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
-        <p className="text-lg">Apenas administradores podem criar semanas e partidas.</p>
-      </div>
-    }>
-    <div className="container mx-auto py-8 px-4">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Nova Semana de Partidas</h1>
-          <p className="text-muted-foreground">
-            Configure a data, monte os times e crie as partidas
-          </p>
+    <RoleGate
+      allow={['admin']}
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
+          <p className="text-lg">Apenas administradores podem criar semanas e partidas.</p>
         </div>
-
-        {/* Date Selection with NEW DatePicker */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5" />
-              Data da Semana
-            </CardTitle>
-            <CardDescription>
-              Selecione a data em que as partidas serão jogadas
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Controller
-              control={control}
-              name="date"
-              render={({ field, fieldState }) => (
-                <DatePickerWithShortcuts
-                  value={field.value ? new Date(field.value) : undefined}
-                  onChange={(date) =>
-                    field.onChange(date?.toISOString().split('T')[0])
-                  }
-                  allowFutureDates={false}
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Teams and Matches */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Teams Section with NEW TeamBuilder */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Times
-                </CardTitle>
-                <CardDescription>
-                  Monte os times selecionando os jogadores disponíveis
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {teamFields.map((field, index) => (
-                  <div key={field.id} className="space-y-2">
-                    <Controller
-                      control={control}
-                      name={`teams.${index}.players`}
-                      render={({ field: playersField, fieldState }) => {
-                        // Get players already selected in OTHER teams
-                        const otherTeamsPlayerIds = watchedTeams
-                          .filter((_, idx) => idx !== index)
-                          .flatMap((t) => t.players);
-
-                        // Filter available players (not in other teams)
-                        const availableForThisTeam =
-                          players?.filter(
-                            (p) => !otherTeamsPlayerIds.includes(p.id)
-                          ) || [];
-
-                        return (
-                          <TeamBuilder
-                            teamIndex={index}
-                            selectedPlayerIds={playersField.value}
-                            availablePlayers={availableForThisTeam}
-                            onPlayersChange={playersField.onChange}
-                            error={fieldState.error?.message}
-                          />
-                        );
-                      }}
-                    />
-
-                    {teamFields.length > 2 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeTeam(index)}
-                        className="w-full"
-                      >
-                        Remover Time
-                      </Button>
-                    )}
-                  </div>
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddTeam}
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Time
-                </Button>
-
-                {errors.teams && (
-                  <p className="text-xs text-destructive">
-                    {typeof errors.teams === 'object' && 'message' in errors.teams
-                      ? (errors.teams as { message?: string }).message
-                      : 'Erro nos times'}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Matches Section with NEW MatchCardV2 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
-                  Partidas
-                </CardTitle>
-                <CardDescription>
-                  Configure as partidas entre os times criados
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {matchFields.map((field, index) => (
-                  <MatchCardV2
-                    key={field.id}
-                    matchIndex={index}
-                    control={control}
-                    setValue={setValue}
-                    teams={teamsForMatches}
-                    onRemove={() => removeMatch(index)}
-                    canRemove={matchFields.length > 1}
-                  />
-                ))}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddMatch}
-                  className="w-full"
-                  disabled={teamFields.length < 2}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Partida
-                </Button>
-
-                {errors.matches && (
-                  <div className="space-y-1">
-                    {typeof errors.matches === 'object' && 'message' in errors.matches && (
-                      <p className="text-xs text-destructive font-medium">
-                        {(errors.matches as { message?: string }).message}
-                      </p>
-                    )}
-                    {Array.isArray(errors.matches) && errors.matches.map((matchError, idx) => (
-                      matchError && (
-                        <div key={idx} className="text-xs text-destructive bg-destructive/10 p-2 rounded">
-                          <p className="font-medium">Partida {idx + 1}:</p>
-                          {matchError.homeTeamId && <p>- {matchError.homeTeamId.message}</p>}
-                          {matchError.awayTeamId && <p>- {matchError.awayTeamId.message}</p>}
-                          {matchError.homeGoals && typeof matchError.homeGoals === 'object' && 'message' in matchError.homeGoals && (
-                            <p>- {(matchError.homeGoals as any).message}</p>
-                          )}
-                          {matchError.homeAssists && typeof matchError.homeAssists === 'object' && 'message' in matchError.homeAssists && (
-                            <p>- {(matchError.homeAssists as any).message}</p>
-                          )}
-                        </div>
-                      )
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Submit Button (Mobile) */}
-            <div className="lg:hidden">
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={submitting || teamFields.length < 2}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Criar Semana
-                  </>
-                )}
-              </Button>
-            </div>
+      }>
+      <div className="container mx-auto py-8 px-4">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">Nova Semana de Partidas</h1>
+            <p className="text-muted-foreground">
+              Configure a data, monte os times e crie as partidas
+            </p>
           </div>
 
-          {/* Right Column: Preview (Desktop) */}
-          <div className="hidden lg:block">
-            <div className="sticky top-6 space-y-4">
-              <WeekPreview
+          {/* Date Selection with NEW DatePicker */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5" />
+                Data da Semana
+              </CardTitle>
+              <CardDescription>Selecione a data em que as partidas serão jogadas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Controller
                 control={control}
-                teams={teamFields}
-                players={players || []}
-              />
-
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={submitting || teamFields.length < 2}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Criando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Criar Semana
-                  </>
+                name="date"
+                render={({ field, fieldState }) => (
+                  <DatePickerWithShortcuts
+                    value={field.value ? new Date(field.value) : undefined}
+                    onChange={(date) => field.onChange(date?.toISOString().split('T')[0])}
+                    allowFutureDates={false}
+                    error={fieldState.error?.message}
+                  />
                 )}
-              </Button>
+              />
+            </CardContent>
+          </Card>
+
+          {/* Main Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Teams and Matches */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Teams Section with NEW TeamBuilder */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Times
+                  </CardTitle>
+                  <CardDescription>
+                    Monte os times selecionando os jogadores disponíveis
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {teamFields.map((field, index) => (
+                    <div key={field.id} className="space-y-2">
+                      <Controller
+                        control={control}
+                        name={`teams.${index}.players`}
+                        render={({ field: playersField, fieldState }) => {
+                          // Get players already selected in OTHER teams
+                          const otherTeamsPlayerIds = watchedTeams
+                            .filter((_, idx) => idx !== index)
+                            .flatMap((t) => t.players);
+
+                          // Filter available players (not in other teams)
+                          const availableForThisTeam =
+                            players?.filter((p) => !otherTeamsPlayerIds.includes(p.id)) || [];
+
+                          return (
+                            <TeamBuilder
+                              teamIndex={index}
+                              selectedPlayerIds={playersField.value}
+                              availablePlayers={availableForThisTeam}
+                              onPlayersChange={playersField.onChange}
+                              error={fieldState.error?.message}
+                            />
+                          );
+                        }}
+                      />
+
+                      {teamFields.length > 2 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeTeam(index)}
+                          className="w-full">
+                          Remover Time
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddTeam}
+                    className="w-full">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Time
+                  </Button>
+
+                  {errors.teams && (
+                    <p className="text-xs text-destructive">
+                      {typeof errors.teams === 'object' && 'message' in errors.teams
+                        ? (errors.teams as { message?: string }).message
+                        : 'Erro nos times'}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Matches Section with NEW MatchCardV2 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Partidas
+                  </CardTitle>
+                  <CardDescription>Configure as partidas entre os times criados</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {matchFields.map((field, index) => (
+                    <MatchCardV2
+                      key={field.id}
+                      matchIndex={index}
+                      control={control}
+                      setValue={setValue}
+                      teams={teamsForMatches}
+                      onRemove={() => removeMatch(index)}
+                      canRemove={matchFields.length > 1}
+                    />
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddMatch}
+                    className="w-full"
+                    disabled={teamFields.length < 2}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Partida
+                  </Button>
+
+                  {errors.matches && (
+                    <div className="space-y-1">
+                      {typeof errors.matches === 'object' && 'message' in errors.matches && (
+                        <p className="text-xs text-destructive font-medium">
+                          {(errors.matches as { message?: string }).message}
+                        </p>
+                      )}
+                      {Array.isArray(errors.matches) &&
+                        errors.matches.map(
+                          (matchError, idx) =>
+                            matchError && (
+                              <div
+                                key={idx}
+                                className="text-xs text-destructive bg-destructive/10 p-2 rounded">
+                                <p className="font-medium">Partida {idx + 1}:</p>
+                                {matchError.homeTeamId && <p>- {matchError.homeTeamId.message}</p>}
+                                {matchError.awayTeamId && <p>- {matchError.awayTeamId.message}</p>}
+                                {matchError.homeGoals &&
+                                  typeof matchError.homeGoals === 'object' &&
+                                  'message' in matchError.homeGoals && (
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    <p>- {(matchError.homeGoals as any).message}</p>
+                                  )}
+                                {matchError.homeAssists &&
+                                  typeof matchError.homeAssists === 'object' &&
+                                  'message' in matchError.homeAssists && (
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    <p>- {(matchError.homeAssists as any).message}</p>
+                                  )}
+                              </div>
+                            ),
+                        )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Submit Button (Mobile) */}
+              <div className="lg:hidden">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={submitting || teamFields.length < 2}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Criar Semana
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Column: Preview (Desktop) */}
+            <div className="hidden lg:block">
+              <div className="sticky top-6 space-y-4">
+                <WeekPreview control={control} teams={teamFields} players={players || []} />
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={submitting || teamFields.length < 2}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Criar Semana
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Mobile Preview */}
-        <div className="lg:hidden mt-6">
-          <WeekPreview
-            control={control}
-            teams={teamFields}
-            players={players || []}
-          />
-        </div>
-      </form>
-    </div>
+          {/* Mobile Preview */}
+          <div className="lg:hidden mt-6">
+            <WeekPreview control={control} teams={teamFields} players={players || []} />
+          </div>
+        </form>
+      </div>
     </RoleGate>
   );
 }

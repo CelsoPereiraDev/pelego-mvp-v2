@@ -30,9 +30,18 @@ const TopPlayersByPosition: React.FC = () => {
   const [midfielders, setMidfielders] = useState<PlayerResumeData[]>([]);
   const [defenders, setDefenders] = useState<PlayerResumeData[]>([]);
 
-  const [sortConfigAtackers, setSortConfigAtackers] = useState<{ key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null>(null);
-  const [sortConfigMidfielders, setSortConfigMidfielders] = useState<{ key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null>(null);
-  const [sortConfigDefenders, setSortConfigDefenders] = useState<{ key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfigAtackers, setSortConfigAtackers] = useState<{
+    key: keyof PlayerResumeData;
+    direction: 'asc' | 'desc';
+  } | null>(null);
+  const [sortConfigMidfielders, setSortConfigMidfielders] = useState<{
+    key: keyof PlayerResumeData;
+    direction: 'asc' | 'desc';
+  } | null>(null);
+  const [sortConfigDefenders, setSortConfigDefenders] = useState<{
+    key: keyof PlayerResumeData;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   useEffect(() => {
     if (weeks && !isLoading && !isError) {
@@ -45,17 +54,22 @@ const TopPlayersByPosition: React.FC = () => {
 
   const compareValues = (key: keyof PlayerResumeData, direction: 'asc' | 'desc') => {
     return (a: PlayerResumeData, b: PlayerResumeData): number => {
-      if (a[key] < b[key]) {
+      const aVal = a[key] ?? 0;
+      const bVal = b[key] ?? 0;
+      if (aVal < bVal) {
         return direction === 'asc' ? -1 : 1;
       }
-      if (a[key] > b[key]) {
+      if (aVal > bVal) {
         return direction === 'asc' ? 1 : -1;
       }
       return 0;
     };
   };
 
-  const sortPlayers = (players: PlayerResumeData[], sortConfig: { key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null) => {
+  const sortPlayers = (
+    players: PlayerResumeData[],
+    sortConfig: { key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null,
+  ) => {
     if (sortConfig !== null) {
       return [...players].sort(compareValues(sortConfig.key, sortConfig.direction));
     }
@@ -64,7 +78,11 @@ const TopPlayersByPosition: React.FC = () => {
 
   const requestSortAtackers = (key: keyof PlayerResumeData) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfigAtackers && sortConfigAtackers.key === key && sortConfigAtackers.direction === 'asc') {
+    if (
+      sortConfigAtackers &&
+      sortConfigAtackers.key === key &&
+      sortConfigAtackers.direction === 'asc'
+    ) {
       direction = 'desc';
     }
     setSortConfigAtackers({ key, direction });
@@ -72,7 +90,11 @@ const TopPlayersByPosition: React.FC = () => {
 
   const requestSortMidfielders = (key: keyof PlayerResumeData) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfigMidfielders && sortConfigMidfielders.key === key && sortConfigMidfielders.direction === 'asc') {
+    if (
+      sortConfigMidfielders &&
+      sortConfigMidfielders.key === key &&
+      sortConfigMidfielders.direction === 'asc'
+    ) {
       direction = 'desc';
     }
     setSortConfigMidfielders({ key, direction });
@@ -80,7 +102,11 @@ const TopPlayersByPosition: React.FC = () => {
 
   const requestSortDefenders = (key: keyof PlayerResumeData) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfigDefenders && sortConfigDefenders.key === key && sortConfigDefenders.direction === 'asc') {
+    if (
+      sortConfigDefenders &&
+      sortConfigDefenders.key === key &&
+      sortConfigDefenders.direction === 'asc'
+    ) {
       direction = 'desc';
     }
     setSortConfigDefenders({ key, direction });
@@ -110,28 +136,60 @@ const TopPlayersByPosition: React.FC = () => {
     router.push(`/best-of-position/${newYear}/${String(newMonth).padStart(2, '0')}`);
   };
 
-  const renderTable = (title: string, players: PlayerResumeData[], sortConfig: { key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null, requestSort: (key: keyof PlayerResumeData) => void) => (
+  const renderTable = (
+    title: string,
+    players: PlayerResumeData[],
+    sortConfig: { key: keyof PlayerResumeData; direction: 'asc' | 'desc' } | null,
+    requestSort: (key: keyof PlayerResumeData) => void,
+  ) => (
     <div className="w-full max-w-[1200px] mb-8">
       <h2 className="text-2xl font-semibold mb-4 text-[hsl(var(--foreground))]">{title}</h2>
       <div className="overflow-x-auto w-full">
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
             <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('name')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('goalsScore')}>Gols</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('assistScore')}>Assistências</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('goalsAgainstScore')}>Média de gols sofridos</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('pointsScore')}>Pontos</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('champioshipScore')}>Campeão Semanal</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('point')}>Pontuação Final</th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('name')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('goalsScore')}>
+                Gols
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('assistScore')}>
+                Assistências
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('goalsAgainstScore')}>
+                Média de gols sofridos
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('pointsScore')}>
+                Pontos
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('champioshipScore')}>
+                Campeão Semanal
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('point')}>
+                Pontuação Final
+              </th>
             </tr>
           </thead>
           <tbody>
             {sortPlayers(players, sortConfig).map((player, index) => (
               <tr
                 key={index}
-                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-              >
+                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
                 <td className="px-4 py-2">{player.name}</td>
                 <td className="px-4 py-2">{player.goalsScore}</td>
                 <td className="px-4 py-2">{player.assistScore}</td>
@@ -174,8 +232,18 @@ export default TopPlayersByPosition;
 
 function mapMonthNumberToText(monthNumber: number) {
   const months = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
   ];
   return months[monthNumber - 1];
 }

@@ -14,6 +14,7 @@ import { useCreateWeekWithTeams } from '@/services/matchs/useCreateWeekWithTeams
 import { usePlayers } from '@/services/player/usePlayers';
 import { useTeams } from '@/services/teams/useTeams';
 import { useWeek } from '@/services/weeks/useWeek';
+import { CreateMatchForm } from '@/types/forms';
 import { Player } from '@/types/player';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -26,43 +27,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, SubmitHandler, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import Select from 'react-select';
 
-export type CreateMatch = {
-  date: string;
-  teams: {
-    players: string[];
-  }[];
-  matches: {
-    homeTeamId: number;
-    homeGoals: {
-      goalsCount: string;
-      whoScores: {
-        goals: number;
-        playerId: string;
-        ownGoalPlayerId?: string;
-      }[];
-    };
-    homeAssists: {
-      assists: number;
-      playerId: string;
-    }[];
-    awayTeamId: number;
-    awayGoals: {
-      goalsCount: string;
-      whoScores: {
-        goals: number;
-        playerId: string;
-        ownGoalPlayerId?: string;
-      }[];
-    };
-    awayAssists: {
-      assists: number;
-      playerId: string;
-    }[];
-  }[];
-};
-
 const getAvailablePlayers = (allPlayers: Player[], selectedPlayers: string[]) => {
-  return allPlayers.filter(player => !selectedPlayers.includes(player.id));
+  return allPlayers.filter((player) => !selectedPlayers.includes(player.id));
 };
 
 const CreateWeekAndMatchesForm: React.FC = () => {
@@ -71,89 +37,116 @@ const CreateWeekAndMatchesForm: React.FC = () => {
   const paramWeekId = params.weekId;
 
   const { week } = useWeek(paramWeekId as string);
-  
 
   const defaultValues = useMemo(() => {
-    
-    return week ? mapWeekToFormValues(week) : {
-      date: '', 
-      teams: [{ players: [] }, { players: [] }],
-      matches: [],
-    };
+    return week
+      ? mapWeekToFormValues(week, players || [])
+      : {
+          date: '',
+          teams: [{ players: [] }, { players: [] }],
+          matches: [],
+        };
   }, [week]);
-  
-  const { handleSubmit, control, formState: { errors }, reset, getValues } = useForm<CreateMatch>({
+
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+    reset,
+  } = useForm<CreateMatchForm>({
     resolver: zodResolver(CreateMatchSchema),
     defaultValues,
   });
   useEffect(() => {
-  if (week) {
-    const mappedValues = mapWeekToFormValues(week);
-    reset(mappedValues);
-  }
-}, [week, reset]);
+    if (week) {
+      const mappedValues = mapWeekToFormValues(week, players || []);
+      reset(mappedValues);
+    }
+  }, [week, reset]);
 
-    
-
-  const [createdTeams, setCreatedTeams] = useState<{
-    players: { id: string }[]; id: string
-  }[]>([]);
+  const [createdTeams, setCreatedTeams] = useState<
+    {
+      players: string[];
+      id: string;
+    }[]
+  >([]);
   const [weekId, setWeekId] = useState<string | null>(null);
 
-  const selectedPlayers = useWatch({ control, name: 'teams' }).flatMap((team: { players: string[] }) => team.players);
+  const selectedPlayers = useWatch({ control, name: 'teams' }).flatMap(
+    (team: { players: string[] }) => team.players,
+  );
   const { players, isLoading } = usePlayers();
-  const { fields: teamFields, append: appendTeam, update: updateTeam } = useFieldArray({
+  const {
+    fields: teamFields,
+    append: appendTeam,
+    update: updateTeam,
+  } = useFieldArray({
     control,
-    name: 'teams'
+    name: 'teams',
   });
-  const { fields: matchFields, append: appendMatch, remove: removeMatch } = useFieldArray({
+  const {
+    fields: matchFields,
+    append: appendMatch,
+    remove: removeMatch,
+  } = useFieldArray({
     control,
-    name: 'matches'
+    name: 'matches',
   });
 
   const { createWeek } = useCreateWeekWithTeams();
   const { createNewMatches } = useCreateMatches();
   const { update } = useTeams();
 
-  const handleCreateTeams: SubmitHandler<CreateMatch> = async data => {
+  const handleCreateTeams: SubmitHandler<CreateMatchForm> = async (data) => {
     try {
       const weekData = {
         date: data.date,
-        teams: data.teams.map(team => team.players)
+        teams: data.teams.map((team) => team.players),
       };
 
       const result = await createWeek(weekData);
 
       if (!result.createdTeams || result.createdTeams.length === 0) {
-        throw new Error("No teams were created");
+        throw new Error('No teams were created');
       }
 
       setCreatedTeams(result.createdTeams);
       setWeekId(result.week.id);
 
-      toast({ title: 'Times criados com sucesso!', description: 'Agora voce pode criar as partidas.' });
+      toast({
+        title: 'Times criados com sucesso!',
+        description: 'Agora voce pode criar as partidas.',
+      });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao criar os times', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar os times',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     }
   };
 
-  const handleCreateMatches: SubmitHandler<CreateMatch> = async data => {
+  const handleCreateMatches: SubmitHandler<CreateMatchForm> = async (data) => {
     try {
       if (!weekId) {
-        throw new Error("Week ID must be set before creating matches.");
+        throw new Error('Week ID must be set before creating matches.');
       }
 
       const { matchesData } = mapFormDataToBackend(data, createdTeams, weekId);
       const createdMatchesResponse = await createNewMatches({ matches: matchesData });
 
-      const createdMatches = createdMatchesResponse.createdMatches;
+      const createdMatches = createdMatchesResponse.createdMatches as {
+        homeTeamId: string;
+        awayTeamId: string;
+        result?: { homeGoals: number; awayGoals: number };
+      }[];
       if (!Array.isArray(createdMatches)) {
-        throw new Error("Expected createdMatches to be an array, but got:", createdMatches);
+        throw new Error('Expected createdMatches to be an array');
       }
 
       const teamPoints: Record<string, number> = {};
 
-      createdMatches.forEach(match => {
+      createdMatches.forEach((match) => {
         const { homeTeamId, awayTeamId, result } = match;
 
         if (!teamPoints[homeTeamId]) {
@@ -179,24 +172,28 @@ const CreateWeekAndMatchesForm: React.FC = () => {
       const pointsArray = Object.values(teamPoints);
       const maxPoints = Math.max(...pointsArray);
       const championTeams = Object.keys(teamPoints).filter(
-        (team) => teamPoints[team] === maxPoints
+        (team) => teamPoints[team] === maxPoints,
       );
 
       const updatedTeams = createdTeams.map((team) => ({
         id: team.id,
         champion: championTeams.length === 1 && team.id === championTeams[0],
         points: teamPoints[team.id] || 0,
-        players: team.players.map((player) => ({
-          id: player.id,
+        players: team.players.map((playerId) => ({
+          id: playerId,
           isChampion: championTeams.length === 1 && team.id === championTeams[0],
         })),
       }));
 
-      await update(updatedTeams);
+      await update(updatedTeams as unknown as import('@/types/match').TeamResponse[]);
 
       toast({ title: 'Partidas criadas!', description: 'Campeoes da semana foram definidos.' });
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao criar as partidas', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar as partidas',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     }
   };
 
@@ -206,10 +203,12 @@ const CreateWeekAndMatchesForm: React.FC = () => {
 
   const handleAddMatch = () => {
     appendMatch({
-      homeTeamId: -1, // Default to no team selected
+      homeTeamId: '',
       homeGoals: { goalsCount: '', whoScores: [] },
+      homeAssists: [],
       awayGoals: { goalsCount: '', whoScores: [] },
-      awayTeamId: -1 // Default to no team selected
+      awayAssists: [],
+      awayTeamId: '',
     });
   };
 
@@ -239,7 +238,9 @@ const CreateWeekAndMatchesForm: React.FC = () => {
                 );
               }}
             />
-            {errors.date && <span className="text-[hsl(var(--destructive))]">Este campo é obrigatório</span>}
+            {errors.date && (
+              <span className="text-[hsl(var(--destructive))]">Este campo é obrigatório</span>
+            )}
           </div>
           <div className="flex flex-col gap-4">
             <Label className="text-[hsl(var(--foreground))]">Times</Label>
@@ -253,10 +254,18 @@ const CreateWeekAndMatchesForm: React.FC = () => {
                     render={({ field }) => (
                       <Select
                         isMulti
-                        options={availablePlayers.map(player => ({ label: player.name, value: player.id }))}
-                        value={field.value.map(playerId => players?.find(player => player.id === playerId)).filter(Boolean).map(player => ({ label: player?.name, value: player?.id }))}
+                        options={availablePlayers.map((player) => ({
+                          label: player.name,
+                          value: player.id,
+                        }))}
+                        value={field.value
+                          .map((playerId) => players?.find((player) => player.id === playerId))
+                          .filter(Boolean)
+                          .map((player) => ({ label: player?.name, value: player?.id }))}
                         onChange={(selectedOptions) => {
-                          const selectedPlayerIds = selectedOptions.map(option => option.value).filter(Boolean) as string[];
+                          const selectedPlayerIds = selectedOptions
+                            .map((option) => option.value)
+                            .filter(Boolean) as string[];
                           field.onChange(selectedPlayerIds);
                           updateTeam(index, { players: selectedPlayerIds });
                         }}
@@ -292,7 +301,11 @@ const CreateWeekAndMatchesForm: React.FC = () => {
           </div>
 
           <div className="flex gap-4 mt-4">
-            <Button variant="primary" size="lg" onClick={handleAddMatch} className="flex gap-2 items-center">
+            <Button
+              variant="default"
+              size="lg"
+              onClick={handleAddMatch}
+              className="flex gap-2 items-center">
               <CalendarDays className="w-4 h-4" /> Adicionar Partida
             </Button>
             <Button variant="outline" size="lg" type="submit" className="flex gap-2 items-center">

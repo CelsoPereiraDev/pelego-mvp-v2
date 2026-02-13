@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { ChartBar } from '@/components/BarChart';
 import { ChartConfig } from '@/components/ui/chart';
@@ -29,34 +29,70 @@ const MonthResume: React.FC = () => {
 
   const chartConfig: ChartConfig = {
     max: {
-      label: "Valor Máximo",
-      color: "hsl(261.2 72.6% 22.9%)",
+      label: 'Valor Máximo',
+      color: 'hsl(261.2 72.6% 22.9%)',
     },
     secondHighest: {
-      label: "Segundo Valor Mais Alto",
-      color: "hsl(263.5 67.4% 34.9%)",
+      label: 'Segundo Valor Mais Alto',
+      color: 'hsl(263.5 67.4% 34.9%)',
     },
     thirdHighest: {
-      label: "Terceiro Valor Mais Alto",
-      color: "hsl(263.4 69.3% 42.2%)",
+      label: 'Terceiro Valor Mais Alto',
+      color: 'hsl(263.4 69.3% 42.2%)',
     },
     fourthHighest: {
-      label: "Quarto Valor Mais Alto",
-      color: "hsl(263.4 70% 50.4%)",
+      label: 'Quarto Valor Mais Alto',
+      color: 'hsl(263.4 70% 50.4%)',
     },
     fifthHighest: {
-      label: "Quinto Valor Mais Alto",
-      color: "hsl(262.1 83.3% 57.8%)",
+      label: 'Quinto Valor Mais Alto',
+      color: 'hsl(262.1 83.3% 57.8%)',
     },
   };
 
   const categories = [
-    { key: 'assists', title: <span className='mt-[2px]'>Assistências</span>, order: 'desc',  description: 'Quantidade de assistências', icon: <AutoAwesomeIcon className='text-[hsl(var(--light-hover))]'/> },
-    { key: 'scorer', title: <span className='mt-[2px]'>Artilheiros</span>, order: 'desc', description: 'Quantidade de gols marcados',icon: <SportsSoccerIcon className='text-[hsl(var(--light-hover))]'/>},
-    { key: 'mvp', title: <span className='mt-[2px]'>MVP</span>, order: 'desc', description: 'Quantidade de vezes que foi campeão da semana', icon: <EmojiEventsIcon className='text-[hsl(var(--light-hover))]'/> },
-    { key: 'lvp', title: <span className='mt-[2px]'>LVP</span>, order: 'asc' , description: 'Porcentagem de aproveitamento' ,icon: <BatteryAlertIcon className='text-[hsl(var(--light-hover))]'/>},
-    { key: 'bestDefender', title: <span className='mt-[2px]'>Melhor Defensor</span>, order: 'asc' ,description: 'Média de gols sofridos por partida' , icon: <LocalPoliceIcon className='text-[hsl(var(--light-hover))]'/>},
-    { key: 'topPointer', title: <span className='mt-[2px]'>Maior Pontuador</span>, order: 'desc' ,description: 'Quantidade de pontos feitos',icon: <StarIcon className='text-[hsl(var(--light-hover))]'/>},
+    {
+      key: 'assists',
+      title: <span className="mt-[2px]">Assistências</span>,
+      order: 'desc',
+      description: 'Quantidade de assistências',
+      icon: <AutoAwesomeIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'scorer',
+      title: <span className="mt-[2px]">Artilheiros</span>,
+      order: 'desc',
+      description: 'Quantidade de gols marcados',
+      icon: <SportsSoccerIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'mvp',
+      title: <span className="mt-[2px]">MVP</span>,
+      order: 'desc',
+      description: 'Quantidade de vezes que foi campeão da semana',
+      icon: <EmojiEventsIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'lvp',
+      title: <span className="mt-[2px]">LVP</span>,
+      order: 'asc',
+      description: 'Porcentagem de aproveitamento',
+      icon: <BatteryAlertIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'bestDefender',
+      title: <span className="mt-[2px]">Melhor Defensor</span>,
+      order: 'asc',
+      description: 'Média de gols sofridos por partida',
+      icon: <LocalPoliceIcon className="text-[hsl(var(--light-hover))]" />,
+    },
+    {
+      key: 'topPointer',
+      title: <span className="mt-[2px]">Maior Pontuador</span>,
+      order: 'desc',
+      description: 'Quantidade de pontos feitos',
+      icon: <StarIcon className="text-[hsl(var(--light-hover))]" />,
+    },
   ];
 
   return (
@@ -64,55 +100,59 @@ const MonthResume: React.FC = () => {
       <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
         Prêmios individuais de {year}
       </h1>
-      <div className='grid grid-cols-3 gap-4'>
-      {categories.map((category) => {
-        let sortedData = monthResume[category.key]
-          .map(item => ({
+      <div className="grid grid-cols-3 gap-4">
+        {categories.map((category) => {
+          const colorMax = chartConfig.max.color!;
+          const colorSecond = chartConfig.secondHighest.color!;
+          const colorThird = chartConfig.thirdHighest.color!;
+          const colorFourth = chartConfig.fourthHighest.color!;
+          const colorFifth = chartConfig.fifthHighest.color!;
+
+          let sortedData = monthResume[category.key as keyof typeof monthResume].map((item: { name: string; count: number }) => ({
             name: item.name,
             value: item.count,
-            fill: chartConfig.max.color // Cor padrão como exemplo
+            fill: colorMax,
           }));
 
-        // Ordena os dados de acordo com a configuração da categoria
-        if (category.order === 'asc') {
-          sortedData = sortedData.sort((a, b) => a.value - b.value);
-        } else {
-          sortedData = sortedData.sort((a, b) => b.value - a.value);
-        }
-
-        // Mapeia as cores de acordo com a posição e valores iguais
-        let lastValue = null;
-        let lastColorIndex = -1;
-
-        sortedData.forEach((item, index) => {
-          if (item.value !== lastValue) {
-            lastColorIndex = index;
+          // Ordena os dados de acordo com a configuração da categoria
+          if (category.order === 'asc') {
+            sortedData = sortedData.sort((a: { value: number }, b: { value: number }) => a.value - b.value);
+          } else {
+            sortedData = sortedData.sort((a: { value: number }, b: { value: number }) => b.value - a.value);
           }
-          if (lastColorIndex === 0) item.fill = chartConfig.max.color;
-          else if (lastColorIndex === 1) item.fill = chartConfig.secondHighest.color;
-          else if (lastColorIndex === 2) item.fill = chartConfig.thirdHighest.color;
-          else if (lastColorIndex === 3) item.fill = chartConfig.fourthHighest.color;
-          else item.fill = chartConfig.fifthHighest.color;
 
-          lastValue = item.value;
-        });
+          // Mapeia as cores de acordo com a posição e valores iguais
+          let lastValue: number | null = null;
+          let lastColorIndex = -1;
 
-        return (
-          <ChartBar
-            key={category.key}
-            title={
-              <span className='flex flex-row gap-3'>
-              {category.icon}
-              {category.title}
-              </span>
+          sortedData.forEach((item, index) => {
+            if (item.value !== lastValue) {
+              lastColorIndex = index;
             }
-            description={category.description}
-            chartData={sortedData}
-            chartConfig={chartConfig}
-          />
-        );
-      })}
+            if (lastColorIndex === 0) item.fill = colorMax;
+            else if (lastColorIndex === 1) item.fill = colorSecond;
+            else if (lastColorIndex === 2) item.fill = colorThird;
+            else if (lastColorIndex === 3) item.fill = colorFourth;
+            else item.fill = colorFifth;
 
+            lastValue = item.value;
+          });
+
+          return (
+            <ChartBar
+              key={category.key}
+              title={
+                <span className="flex flex-row gap-3">
+                  {category.icon}
+                  {category.title}
+                </span>
+              }
+              description={category.description}
+              chartData={sortedData}
+              chartConfig={chartConfig}
+            />
+          );
+        })}
       </div>
     </div>
   );

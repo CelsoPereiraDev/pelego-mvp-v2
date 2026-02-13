@@ -25,9 +25,7 @@ export const DatePickerWithShortcuts: React.FC<DatePickerWithShortcutsProps> = (
   id,
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    value || defaultValue
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(value || defaultValue);
 
   const handleSelectDate = (date: Date) => {
     setSelectedDate(date);
@@ -55,9 +53,8 @@ export const DatePickerWithShortcuts: React.FC<DatePickerWithShortcutsProps> = (
             className={cn(
               'w-full justify-start text-left font-normal',
               !selectedDate && 'text-muted-foreground',
-              error && 'border-destructive'
-            )}
-          >
+              error && 'border-destructive',
+            )}>
             <CalendarIcon className="mr-2 h-4 w-4" />
             {selectedDate ? (
               format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })

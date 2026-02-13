@@ -17,7 +17,8 @@ export function useUpdateWeekAndMatches() {
       const result = await updateWeekAndMatches(futId, weekId, data);
       return result;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar semana e partidas';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Erro ao atualizar semana e partidas';
       setError(errorMessage);
       throw err;
     } finally {

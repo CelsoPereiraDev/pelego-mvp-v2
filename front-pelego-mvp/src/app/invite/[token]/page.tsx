@@ -92,8 +92,7 @@ export default function InviteAcceptPage() {
               <p className="text-red-500 mb-4">{error}</p>
               <button
                 onClick={() => router.push('/')}
-                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
+                className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
                 Ir para o app
               </button>
             </div>
@@ -114,8 +113,11 @@ export default function InviteAcceptPage() {
                 <h2 className="text-lg font-semibold mb-2">Você foi convidado!</h2>
                 <p className="text-sm text-muted-foreground">
                   Você foi convidado para participar do Fut{' '}
-                  <strong className="text-foreground">{invite.futName}</strong>{' '}
-                  como <strong className="text-foreground">{roleLabels[invite.role] || invite.role}</strong>.
+                  <strong className="text-foreground">{invite.futName}</strong> como{' '}
+                  <strong className="text-foreground">
+                    {roleLabels[invite.role] || invite.role}
+                  </strong>
+                  .
                 </p>
               </div>
 
@@ -124,8 +126,7 @@ export default function InviteAcceptPage() {
               <button
                 onClick={handleAccept}
                 disabled={accepting}
-                className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
+                className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
                 {accepting ? 'Aceitando...' : 'Aceitar convite'}
               </button>
             </>

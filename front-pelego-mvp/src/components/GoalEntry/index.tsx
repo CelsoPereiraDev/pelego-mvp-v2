@@ -118,7 +118,7 @@ export const GoalEntry = ({
       allGoalScorers
         ?.filter((s, idx) => idx !== goalIndex && s?.playerId !== 'GC')
         .map((s) => s?.playerId)
-        .filter(Boolean)
+        .filter(Boolean),
     );
 
     const available = teamPlayers
@@ -161,7 +161,9 @@ export const GoalEntry = ({
       {/* Player Selection and Goal Count */}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1">
-          <Label htmlFor={`match-${matchIndex}-${side}-goal-${goalIndex}-player`} className="text-xs">
+          <Label
+            htmlFor={`match-${matchIndex}-${side}-goal-${goalIndex}-player`}
+            className="text-xs">
             Jogador
           </Label>
           <Controller
@@ -182,8 +184,7 @@ export const GoalEntry = ({
         <div className="space-y-1">
           <Label
             htmlFor={`match-${matchIndex}-${side}-goal-${goalIndex}-count`}
-            className="text-xs"
-          >
+            className="text-xs">
             Qtd Gols
           </Label>
           <Controller
@@ -292,7 +293,7 @@ const AssistEntry = ({
               field.onChange(opt?.value || '');
               setValue(
                 `matches.${matchIndex}.${side}Assists.${goalIndex}.assists`,
-                opt?.value ? 1 : 0
+                opt?.value ? 1 : 0,
               );
             }}
             placeholder="Quem assistiu?"

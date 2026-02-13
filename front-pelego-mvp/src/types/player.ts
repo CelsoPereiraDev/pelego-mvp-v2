@@ -1,11 +1,11 @@
-import { playerGetOverallSchema } from "@/schema/player";
-import { z } from "zod";
+import { playerGetOverallSchema } from '@/schema/player';
+import { z } from 'zod';
 
 export enum PlayerPosition {
   MEI = 'MEI',
   ATK = 'ATK',
   DEF = 'DEF',
-  GOL = 'GOL'
+  GOL = 'GOL',
 }
 
 export interface PlayerOverall {
@@ -35,17 +35,16 @@ export interface Player {
   monthBestDefender?: boolean;
   monthBestOfPosition?: boolean;
   monthBestAssist?: boolean;
-  monthIndividualPrizes?: MonthIndividualPrizes[]
-  yearIndividualPrizes?: YearIndividualPrizes[]
+  monthIndividualPrizes?: MonthIndividualPrizes[];
+  yearIndividualPrizes?: YearIndividualPrizes[];
 }
-
 
 export interface MonthIndividualPrizes {
   date: Date;
   championOfTheWeek: {
     championTimes: number;
     date: Date[];
-  }
+  };
   monthBestOfPosition: boolean;
   monthLVP: boolean;
   monthStriker?: boolean;
@@ -57,7 +56,7 @@ export interface MonthIndividualPrizes {
 
 export interface YearIndividualPrizes {
   year: Date;
-  championOfTheWeek: number
+  championOfTheWeek: number;
   yearBestOfPosition: boolean;
   yearLVP: boolean;
   yearStriker?: boolean;

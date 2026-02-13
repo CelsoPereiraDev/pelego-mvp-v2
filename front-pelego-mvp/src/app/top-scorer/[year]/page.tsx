@@ -12,16 +12,16 @@ interface PlayerGoalsStats {
 }
 
 const TopScorersByDate: React.FC = () => {
-
   const params = useParams();
   const year = params.year;
-
 
   const { weeks, isLoading, isError } = useWeeksByDate(year.toString());
 
   const [topScorers, setTopScorers] = useState<PlayerGoalsStats[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof PlayerGoalsStats; direction: 'asc' | 'desc' } | null>(null);
-
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof PlayerGoalsStats;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   useEffect(() => {
     if (weeks && !isLoading && !isError) {
@@ -29,25 +29,27 @@ const TopScorersByDate: React.FC = () => {
       const processedMatches = new Set<string>();
 
       weeks.forEach((week) => {
-        week.teams.flatMap((team) => team.matchesHome.concat(team.matchesAway)).forEach((match) => {
-          if (!processedMatches.has(match.id)) {
-            processedMatches.add(match.id);
+        week.teams
+          .flatMap((team) => team.matchesHome.concat(team.matchesAway))
+          .forEach((match) => {
+            if (!processedMatches.has(match.id)) {
+              processedMatches.add(match.id);
 
-            match.goals.forEach((goal) => {
-              if (goal.player) {
-                if (!playerGoalsMap[goal.player.id]) {
-                  playerGoalsMap[goal.player.id] = {
-                    name: goal.player.name,
-                    goals: 0,
-                    weeksPlayed: weeks.length, // Define weeksPlayed como weeks.length aqui
-                    averageGoalsPerWeek: 0,
-                  };
+              match.goals.forEach((goal) => {
+                if (goal.player) {
+                  if (!playerGoalsMap[goal.player.id]) {
+                    playerGoalsMap[goal.player.id] = {
+                      name: goal.player.name,
+                      goals: 0,
+                      weeksPlayed: weeks.length, // Define weeksPlayed como weeks.length aqui
+                      averageGoalsPerWeek: 0,
+                    };
+                  }
+                  playerGoalsMap[goal.player.id].goals += goal.goals;
                 }
-                playerGoalsMap[goal.player.id].goals += goal.goals;
-              }
-            });
-          }
-        });
+              });
+            }
+          });
       });
 
       // Calcula a média de gols por semana para cada jogador
@@ -59,7 +61,6 @@ const TopScorersByDate: React.FC = () => {
       setTopScorers(sortedScorers);
     }
   }, [weeks, isLoading, isError]);
-
 
   const sortedStats = React.useMemo(() => {
     if (sortConfig !== null) {
@@ -84,39 +85,51 @@ const TopScorersByDate: React.FC = () => {
     setSortConfig({ key, direction });
   };
 
-
   if (isLoading) return <div className="text-[hsl(var(--foreground))]">Loading...</div>;
   if (isError) return <div className="text-[hsl(var(--foreground))]">Error: {isError.message}</div>;
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] w-full flex flex-col items-center p-8">
-        <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
-          Artilharia de {year}
-        </h1>
+      <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
+        Artilharia de {year}
+      </h1>
       <div className="overflow-x-auto w-full max-w-[1200px]">
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
             <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('name')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('goals')}>Gols Marcados</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('averageGoalsPerWeek')}>Média de Gols por Semana</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('weeksPlayed')}>Semanas Jogadas</th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('name')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('goals')}>
+                Gols Marcados
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('averageGoalsPerWeek')}>
+                Média de Gols por Semana
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('weeksPlayed')}>
+                Semanas Jogadas
+              </th>
             </tr>
           </thead>
           <tbody>
-            {sortedStats.map((player, index) =>
-              (
-                <tr
-                  key={index}
-                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-                >
-                  <td className="px-4 py-2">{player.name}</td>
-                  <td className="px-4 py-2">{player.goals}</td>
-                  <td className="px-4 py-2">{player.averageGoalsPerWeek.toFixed(2)}</td>
-                  <td className="px-4 py-2">{player.weeksPlayed}</td>
-                </tr>
-              )
-            )}
+            {sortedStats.map((player, index) => (
+              <tr
+                key={index}
+                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
+                <td className="px-4 py-2">{player.name}</td>
+                <td className="px-4 py-2">{player.goals}</td>
+                <td className="px-4 py-2">{player.averageGoalsPerWeek.toFixed(2)}</td>
+                <td className="px-4 py-2">{player.weeksPlayed}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

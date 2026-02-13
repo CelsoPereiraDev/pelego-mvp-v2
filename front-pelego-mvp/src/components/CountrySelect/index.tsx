@@ -1,4 +1,3 @@
-
 import { OptionProps, SingleValue } from 'react-select';
 import Flag from 'react-world-flags';
 import countryOptions from '../../utils/countryOptions';
@@ -35,11 +34,12 @@ const customOption = (props: OptionProps<CountryOption>) => {
   );
 };
 
-const CountrySelect: React.FC<CountrySelectProps> = (props) => (
-  <SelectWithSearch
+const CountrySelect: React.FC<CountrySelectProps> = ({ value, onChange }) => (
+  <SelectWithSearch<CountryOption>
     options={countryOptions}
     components={{ SingleValue: customSingleValue, Option: customOption }}
-    {...props}
+    value={value}
+    onChange={(newValue) => onChange(newValue as SingleValue<CountryOption>)}
   />
 );
 

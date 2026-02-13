@@ -1,9 +1,4 @@
-import {
-  subDays,
-  startOfMonth,
-  subMonths,
-  startOfToday,
-} from 'date-fns';
+import { subDays, startOfMonth, subMonths, startOfToday } from 'date-fns';
 import { DateShortcut } from '@/types/components';
 
 /**

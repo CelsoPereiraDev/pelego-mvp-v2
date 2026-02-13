@@ -23,12 +23,25 @@ const TopScorersByDate: React.FC = () => {
   const { weeks, isLoading, isError } = useWeeksByDate(year.toString(), month?.toString());
 
   const [topScorers, setTopScorers] = useState<PlayerGoalsStats[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof PlayerGoalsStats; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof PlayerGoalsStats;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   function mapMonthNumberToText(monthNumber: number) {
     const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
     ];
     return months[monthNumber - 1];
   }
@@ -39,25 +52,27 @@ const TopScorersByDate: React.FC = () => {
       const processedMatches = new Set<string>();
 
       weeks.forEach((week) => {
-        week.teams.flatMap((team) => team.matchesHome.concat(team.matchesAway)).forEach((match) => {
-          if (!processedMatches.has(match.id)) {
-            processedMatches.add(match.id);
+        week.teams
+          .flatMap((team) => team.matchesHome.concat(team.matchesAway))
+          .forEach((match) => {
+            if (!processedMatches.has(match.id)) {
+              processedMatches.add(match.id);
 
-            match.goals.forEach((goal) => {
-              if (goal.player) {
-                if (!playerGoalsMap[goal.player.id]) {
-                  playerGoalsMap[goal.player.id] = {
-                    name: goal.player.name,
-                    goals: 0,
-                    weeksPlayed: weeks.length, // Define weeksPlayed como weeks.length aqui
-                    averageGoalsPerWeek: 0,
-                  };
+              match.goals.forEach((goal) => {
+                if (goal.player) {
+                  if (!playerGoalsMap[goal.player.id]) {
+                    playerGoalsMap[goal.player.id] = {
+                      name: goal.player.name,
+                      goals: 0,
+                      weeksPlayed: weeks.length, // Define weeksPlayed como weeks.length aqui
+                      averageGoalsPerWeek: 0,
+                    };
+                  }
+                  playerGoalsMap[goal.player.id].goals += goal.goals;
                 }
-                playerGoalsMap[goal.player.id].goals += goal.goals;
-              }
-            });
-          }
-        });
+              });
+            }
+          });
       });
 
       // Calcula a média de gols por semana para cada jogador
@@ -69,7 +84,6 @@ const TopScorersByDate: React.FC = () => {
       setTopScorers(sortedScorers);
     }
   }, [weeks, isLoading, isError]);
-
 
   const sortedStats = React.useMemo(() => {
     if (sortConfig !== null) {
@@ -138,26 +152,39 @@ const TopScorersByDate: React.FC = () => {
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
             <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('name')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('goals')}>Gols Marcados</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('averageGoalsPerWeek')}>Média de Gols por Semana</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('weeksPlayed')}>Semanas Jogadas</th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('name')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('goals')}>
+                Gols Marcados
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('averageGoalsPerWeek')}>
+                Média de Gols por Semana
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('weeksPlayed')}>
+                Semanas Jogadas
+              </th>
             </tr>
           </thead>
           <tbody>
-            {sortedStats.map((player, index) =>
-              (
-                <tr
-                  key={index}
-                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-                >
-                  <td className="px-4 py-2">{player.name}</td>
-                  <td className="px-4 py-2">{player.goals}</td>
-                  <td className="px-4 py-2">{player.averageGoalsPerWeek.toFixed(2)}</td>
-                  <td className="px-4 py-2">{player.weeksPlayed}</td>
-                </tr>
-              )
-            )}
+            {sortedStats.map((player, index) => (
+              <tr
+                key={index}
+                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
+                <td className="px-4 py-2">{player.name}</td>
+                <td className="px-4 py-2">{player.goals}</td>
+                <td className="px-4 py-2">{player.averageGoalsPerWeek.toFixed(2)}</td>
+                <td className="px-4 py-2">{player.weeksPlayed}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

@@ -1,27 +1,27 @@
-import { Player, PlayerGoals } from "./player";
-import { Team } from "./team";
+import { Player, PlayerGoals } from './player';
+import { Team } from './team';
 
 export interface MonthGoals {
-    monthName: string,
-    players: PlayerGoals[],
+  monthName: string;
+  players: PlayerGoals[];
 }
 
 export interface MonthStats {
-    monthName: string,
-    matches: string,
-    totalGoals: string,
-    goalAverage: string,
-    playerOfTheMonth: Player[],
+  monthName: string;
+  matches: string;
+  totalGoals: string;
+  goalAverage: string;
+  playerOfTheMonth: Player[];
 }
 
 export interface TeamMatch {
-    name: string,
-    goals:string,
-    team: Team,
-    scores: string[]
+  name: string;
+  goals: string;
+  team: Team;
+  scores: string[];
 }
 
 export interface Match {
-    firstTeam: TeamMatch,
-    secontTeam: TeamMatch,
+  firstTeam: TeamMatch;
+  secontTeam: TeamMatch;
 }

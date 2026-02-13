@@ -175,10 +175,7 @@ const WeekDetails: React.FC = () => {
 
             {/* Seção Estatísticas */}
             <section>
-              <SectionHeader
-                title="Estatísticas da Semana"
-                icon="📊"
-              />
+              <SectionHeader title="Estatísticas da Semana" icon="📊" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <StatCard
                   title="Artilheiros"

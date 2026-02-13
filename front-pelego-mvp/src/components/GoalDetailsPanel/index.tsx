@@ -79,7 +79,10 @@ export const GoalDetailsPanel = ({
   });
 
   // Field array for assists
-  const { fields: assistFields, append: appendAssist, remove: removeAssist } = useFieldArray({
+  const {
+    append: appendAssist,
+    remove: removeAssist,
+  } = useFieldArray({
     control,
     name: `matches.${matchIndex}.${side}Assists`,
   });
@@ -215,7 +218,7 @@ export const GoalDetailsPanel = ({
         <ChevronDown
           className={cn(
             'h-4 w-4 transition-transform duration-200',
-            isOpen && 'transform rotate-180'
+            isOpen && 'transform rotate-180',
           )}
         />
       </CollapsibleTrigger>
@@ -244,9 +247,8 @@ export const GoalDetailsPanel = ({
               'flex items-center gap-2 p-2 rounded-md text-xs',
               validationState.status === 'valid' && 'bg-goal-indicator/10 text-goal-indicator',
               validationState.status === 'invalid' && 'bg-destructive/10 text-destructive',
-              validationState.status === 'incomplete' && 'bg-muted text-muted-foreground'
-            )}
-          >
+              validationState.status === 'incomplete' && 'bg-muted text-muted-foreground',
+            )}>
             {validationState.status === 'valid' && <CheckCircle2 className="w-4 h-4" />}
             {validationState.status === 'invalid' && <AlertCircle className="w-4 h-4" />}
             {validationState.status === 'incomplete' && <AlertTriangle className="w-4 h-4" />}

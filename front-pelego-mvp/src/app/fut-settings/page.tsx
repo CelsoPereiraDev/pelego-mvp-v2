@@ -20,7 +20,13 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { getMembers, updateMemberRole, removeMember, linkPlayerToMember, updateFut } from '@/services/futs/resources';
+import {
+  getMembers,
+  updateMemberRole,
+  removeMember,
+  linkPlayerToMember,
+  updateFut,
+} from '@/services/futs/resources';
 import { createInvite, getInvites, revokeInvite } from '@/services/invites/resources';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -49,8 +55,7 @@ export default function FutSettingsPage() {
         <div className="flex items-center justify-center min-h-[60vh]">
           <p className="text-muted-foreground">Apenas administradores podem acessar esta pagina.</p>
         </div>
-      }
-    >
+      }>
       <FutSettingsContent />
     </RoleGate>
   );
@@ -99,7 +104,11 @@ function FutSettingsContent() {
       const data = await getMembers(futId);
       setMembers(data);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao carregar membros', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar membros',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     } finally {
       setLoadingMembers(false);
     }
@@ -111,7 +120,11 @@ function FutSettingsContent() {
       const data = await getInvites(futId);
       setInvites(data);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao carregar convites', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar convites',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     } finally {
       setLoadingInvites(false);
     }
@@ -138,7 +151,11 @@ function FutSettingsContent() {
       await refreshFuts();
       setEditingFut(false);
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao salvar', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao salvar',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     } finally {
       setSavingFut(false);
     }
@@ -152,7 +169,11 @@ function FutSettingsContent() {
       await updateMemberRole(futId, userId, newRole);
       await loadMembers();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao alterar role', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao alterar role',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     }
   };
 
@@ -165,7 +186,11 @@ function FutSettingsContent() {
       setDeleteTargetMember(null);
       await loadMembers();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao remover membro', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao remover membro',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     } finally {
       setDeleting(false);
     }
@@ -180,7 +205,11 @@ function FutSettingsContent() {
       setSelectedPlayerId('');
       await loadMembers();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao vincular jogador', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao vincular jogador',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     }
   };
 
@@ -204,7 +233,11 @@ function FutSettingsContent() {
       setGeneratedLink(link);
       await loadInvites();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao criar convite', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar convite',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     } finally {
       setCreatingInvite(false);
     }
@@ -216,7 +249,11 @@ function FutSettingsContent() {
       await revokeInvite(futId, token);
       await loadInvites();
     } catch (error) {
-      toast({ variant: 'destructive', title: 'Erro ao revogar convite', description: error instanceof Error ? error.message : 'Tente novamente' });
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao revogar convite',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
     }
   };
 
@@ -248,7 +285,7 @@ function FutSettingsContent() {
               <Input
                 id="futName"
                 value={futNameInput}
-                onChange={e => setFutNameInput(e.target.value)}
+                onChange={(e) => setFutNameInput(e.target.value)}
                 placeholder="Nome do Fut"
               />
             </div>
@@ -257,7 +294,7 @@ function FutSettingsContent() {
               <Input
                 id="futDesc"
                 value={futDescInput}
-                onChange={e => setFutDescInput(e.target.value)}
+                onChange={(e) => setFutDescInput(e.target.value)}
                 placeholder="Descricao (opcional)"
               />
             </div>
@@ -265,7 +302,9 @@ function FutSettingsContent() {
               <Button onClick={handleSaveFut} disabled={savingFut}>
                 {savingFut ? 'Salvando...' : 'Salvar'}
               </Button>
-              <Button variant="ghost" onClick={() => setEditingFut(false)}>Cancelar</Button>
+              <Button variant="ghost" onClick={() => setEditingFut(false)}>
+                Cancelar
+              </Button>
             </div>
           </div>
         ) : (
@@ -284,14 +323,15 @@ function FutSettingsContent() {
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : (
           <div className="space-y-3">
-            {members.map(member => (
+            {members.map((member) => (
               <div
                 key={member.userId}
-                className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
-              >
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium truncate">{member.displayName || member.email || member.userId}</p>
+                    <p className="font-medium truncate">
+                      {member.displayName || member.email || member.userId}
+                    </p>
                     <Badge variant={roleBadgeVariant[member.role]} size="sm">
                       {roleLabels[member.role]}
                     </Badge>
@@ -309,9 +349,10 @@ function FutSettingsContent() {
                 <div className="flex items-center gap-1 ml-2">
                   <select
                     value={member.role}
-                    onChange={e => handleRoleChange(member.userId, e.target.value as 'admin' | 'user' | 'viewer')}
-                    className="text-xs rounded border border-border bg-background px-2 py-1"
-                  >
+                    onChange={(e) =>
+                      handleRoleChange(member.userId, e.target.value as 'admin' | 'user' | 'viewer')
+                    }
+                    className="text-xs rounded border border-border bg-background px-2 py-1">
                     <option value="admin">Admin</option>
                     <option value="user">Membro</option>
                     <option value="viewer">Espectador</option>
@@ -326,8 +367,7 @@ function FutSettingsContent() {
                       setLinkTargetMember(member);
                       setSelectedPlayerId(member.linkedPlayerId || '');
                       setLinkDialogOpen(true);
-                    }}
-                  >
+                    }}>
                     <LinkIcon className="w-4 h-4" />
                   </Button>
 
@@ -339,8 +379,7 @@ function FutSettingsContent() {
                     onClick={() => {
                       setDeleteTargetMember(member);
                       setDeleteDialogOpen(true);
-                    }}
-                  >
+                    }}>
                     <DeleteIcon className="w-4 h-4" />
                   </Button>
                 </div>
@@ -354,7 +393,12 @@ function FutSettingsContent() {
       <section className="bg-card rounded-xl border border-border p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Convites</h2>
-          <Button size="sm" onClick={() => { setGeneratedLink(''); setInviteDialogOpen(true); }}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setGeneratedLink('');
+              setInviteDialogOpen(true);
+            }}>
             <AddLinkIcon className="w-4 h-4 mr-1" /> Gerar convite
           </Button>
         </div>
@@ -365,13 +409,12 @@ function FutSettingsContent() {
           <p className="text-sm text-muted-foreground">Nenhum convite ativo.</p>
         ) : (
           <div className="space-y-3">
-            {invites.map(invite => {
+            {invites.map((invite) => {
               const link = `${window.location.origin}/invite/${invite.token}`;
               return (
                 <div
                   key={invite.token}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
-                >
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{invite.token}</code>
@@ -380,9 +423,14 @@ function FutSettingsContent() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>Usos: {invite.usedCount}{invite.maxUses !== null ? `/${invite.maxUses}` : ''}</span>
+                      <span>
+                        Usos: {invite.usedCount}
+                        {invite.maxUses !== null ? `/${invite.maxUses}` : ''}
+                      </span>
                       {invite.expiresAt && (
-                        <span>Expira: {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}</span>
+                        <span>
+                          Expira: {new Date(invite.expiresAt).toLocaleDateString('pt-BR')}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -393,8 +441,7 @@ function FutSettingsContent() {
                       size="icon"
                       className="h-8 w-8"
                       title="Copiar link"
-                      onClick={() => handleCopyLink(link, invite.token)}
-                    >
+                      onClick={() => handleCopyLink(link, invite.token)}>
                       {copiedToken === invite.token ? (
                         <CheckIcon className="w-4 h-4 text-green-500" />
                       ) : (
@@ -406,8 +453,7 @@ function FutSettingsContent() {
                       size="icon"
                       className="h-8 w-8 text-destructive"
                       title="Revogar"
-                      onClick={() => handleRevokeInvite(invite.token)}
-                    >
+                      onClick={() => handleRevokeInvite(invite.token)}>
                       <DeleteIcon className="w-4 h-4" />
                     </Button>
                   </div>
@@ -437,8 +483,7 @@ function FutSettingsContent() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleCopyLink(generatedLink, 'generated')}
-                  >
+                    onClick={() => handleCopyLink(generatedLink, 'generated')}>
                     {copiedToken === 'generated' ? (
                       <CheckIcon className="w-4 h-4 text-green-500" />
                     ) : (
@@ -448,7 +493,9 @@ function FutSettingsContent() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setInviteDialogOpen(false)}>Fechar</Button>
+                <Button variant="ghost" onClick={() => setInviteDialogOpen(false)}>
+                  Fechar
+                </Button>
               </DialogFooter>
             </div>
           ) : (
@@ -457,9 +504,8 @@ function FutSettingsContent() {
                 <Label>Role do convidado</Label>
                 <select
                   value={inviteRole}
-                  onChange={e => setInviteRole(e.target.value as 'user' | 'viewer')}
-                  className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                >
+                  onChange={(e) => setInviteRole(e.target.value as 'user' | 'viewer')}
+                  className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
                   <option value="user">Membro</option>
                   <option value="viewer">Espectador</option>
                 </select>
@@ -468,9 +514,10 @@ function FutSettingsContent() {
                 <Label>Expiracao</Label>
                 <select
                   value={inviteExpiry ?? ''}
-                  onChange={e => setInviteExpiry(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                >
+                  onChange={(e) =>
+                    setInviteExpiry(e.target.value ? Number(e.target.value) : undefined)
+                  }
+                  className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
                   <option value="1">1 dia</option>
                   <option value="7">7 dias</option>
                   <option value="30">30 dias</option>
@@ -481,9 +528,10 @@ function FutSettingsContent() {
                 <Label>Maximo de usos</Label>
                 <select
                   value={inviteMaxUses ?? ''}
-                  onChange={e => setInviteMaxUses(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                >
+                  onChange={(e) =>
+                    setInviteMaxUses(e.target.value ? Number(e.target.value) : undefined)
+                  }
+                  className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
                   <option value="1">1 uso</option>
                   <option value="5">5 usos</option>
                   <option value="10">10 usos</option>
@@ -491,7 +539,9 @@ function FutSettingsContent() {
                 </select>
               </div>
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setInviteDialogOpen(false)}>Cancelar</Button>
+                <Button variant="ghost" onClick={() => setInviteDialogOpen(false)}>
+                  Cancelar
+                </Button>
                 <Button onClick={handleCreateInvite} disabled={creatingInvite}>
                   {creatingInvite ? 'Gerando...' : 'Gerar link'}
                 </Button>
@@ -507,25 +557,31 @@ function FutSettingsContent() {
           <DialogHeader>
             <DialogTitle>Vincular jogador</DialogTitle>
             <DialogDescription>
-              Vincule um jogador a conta de {linkTargetMember?.displayName || linkTargetMember?.email}.
+              Vincule um jogador a conta de{' '}
+              {linkTargetMember?.displayName || linkTargetMember?.email}.
             </DialogDescription>
           </DialogHeader>
           <div>
             <Label>Jogador</Label>
             <select
               value={selectedPlayerId}
-              onChange={e => setSelectedPlayerId(e.target.value)}
-              className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-            >
+              onChange={(e) => setSelectedPlayerId(e.target.value)}
+              className="w-full mt-1 rounded-lg border border-border bg-background px-3 py-2 text-sm">
               <option value="">Selecione um jogador</option>
               {players?.map((player: PlayerResponse) => (
-                <option key={player.id} value={player.id}>{player.name}</option>
+                <option key={player.id} value={player.id}>
+                  {player.name}
+                </option>
               ))}
             </select>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setLinkDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleLinkPlayer} disabled={!selectedPlayerId}>Vincular</Button>
+            <Button variant="ghost" onClick={() => setLinkDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleLinkPlayer} disabled={!selectedPlayerId}>
+              Vincular
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -537,11 +593,14 @@ function FutSettingsContent() {
             <DialogTitle>Remover membro</DialogTitle>
             <DialogDescription>
               Tem certeza que deseja remover{' '}
-              <strong>{deleteTargetMember?.displayName || deleteTargetMember?.email}</strong> do Fut?
+              <strong>{deleteTargetMember?.displayName || deleteTargetMember?.email}</strong> do
+              Fut?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
             <Button variant="destructive" onClick={handleRemoveMember} disabled={deleting}>
               {deleting ? 'Removendo...' : 'Remover'}
             </Button>

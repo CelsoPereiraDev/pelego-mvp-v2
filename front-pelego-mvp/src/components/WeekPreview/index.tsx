@@ -6,45 +6,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Trophy, Target, TrendingUp, AlertTriangle, Award } from 'lucide-react';
+import { CreateMatchForm } from '@/types/forms';
 import { PlayerResponse } from '@/types/player';
 
-interface CreateMatchForm {
-  date: string;
-  teams: {
-    players: string[];
-  }[];
-  matches: {
-    homeTeamId: string;
-    awayTeamId: string;
-    homeGoals: {
-      goalsCount: string;
-      whoScores?: {
-        goals: number;
-        playerId: string;
-        ownGoalPlayerId?: string;
-      }[];
-    };
-    homeAssists?: {
-      assists: number;
-      playerId: string;
-    }[];
-    awayGoals: {
-      goalsCount: string;
-      whoScores?: {
-        goals: number;
-        playerId: string;
-        ownGoalPlayerId?: string;
-      }[];
-    };
-    awayAssists?: {
-      assists: number;
-      playerId: string;
-    }[];
-  }[];
-}
-
 interface WeekPreviewProps {
-  control: Control<CreateMatchForm>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<CreateMatchForm, any>;
   teams: { players: string[] }[];
   players: PlayerResponse[];
 }
@@ -118,25 +85,31 @@ export const WeekPreview = ({ control, teams, players }: WeekPreviewProps) => {
     });
 
     // Find top scorer
-    let topScorer: { playerId: string; goals: number } | null = null;
-    Object.entries(playerGoals).forEach(([playerId, goals]) => {
-      if (!topScorer || goals > topScorer.goals) {
-        topScorer = { playerId, goals };
-      }
-    });
+    const topScorer = Object.entries(playerGoals).reduce<{ playerId: string; goals: number } | null>(
+      (best, [playerId, goals]) => {
+        if (!best || goals > best.goals) {
+          return { playerId, goals };
+        }
+        return best;
+      },
+      null,
+    );
 
     // Find top assister
-    let topAssister: { playerId: string; assists: number } | null = null;
-    Object.entries(playerAssists).forEach(([playerId, assists]) => {
-      if (!topAssister || assists > topAssister.assists) {
-        topAssister = { playerId, assists };
+    const topAssister = Object.entries(playerAssists).reduce<{
+      playerId: string;
+      assists: number;
+    } | null>((best, [playerId, assists]) => {
+      if (!best || assists > best.assists) {
+        return { playerId, assists };
       }
-    });
+      return best;
+    }, null);
 
     // Find leader(s)
     const maxPoints = Math.max(...Object.values(teamPoints));
     const leaders = Object.entries(teamPoints)
-      .filter(([_, points]) => points === maxPoints)
+      .filter(([, points]) => points === maxPoints)
       .map(([teamIdx, points]) => ({ teamIdx: parseInt(teamIdx), points }));
 
     return {
@@ -190,8 +163,7 @@ export const WeekPreview = ({ control, teams, players }: WeekPreviewProps) => {
                 return (
                   <div
                     key={teamIdx}
-                    className="flex items-center justify-between p-2 rounded-md bg-card/50"
-                  >
+                    className="flex items-center justify-between p-2 rounded-md bg-card/50">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-muted-foreground w-4">
                         {position + 1}º
@@ -233,15 +205,15 @@ export const WeekPreview = ({ control, teams, players }: WeekPreviewProps) => {
                   <Target className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">{getPlayerName(statistics.topScorer.playerId)}</p>
+                  <p className="font-medium text-sm">
+                    {getPlayerName(statistics.topScorer.playerId)}
+                  </p>
                   <p className="text-xs text-muted-foreground">Artilheiro</p>
                 </div>
               </div>
               <Badge variant="goal" className="gap-1">
                 {statistics.topScorer.goals}
-                <span className="text-xs">
-                  gol{statistics.topScorer.goals !== 1 ? 's' : ''}
-                </span>
+                <span className="text-xs">gol{statistics.topScorer.goals !== 1 ? 's' : ''}</span>
               </Badge>
             </div>
           ) : (

@@ -11,8 +11,10 @@ const PlayerStatsPage: React.FC = () => {
   const year = parseInt(params.year as string, 10);
   const { weeks, isLoading, isError } = useWeeksByDate(year.toString());
   const [playerStats, setPlayerStats] = useState<SimplePlayerStats[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof SimplePlayerStats; direction: 'asc' | 'desc' } | null>(null);
-
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof SimplePlayerStats;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   useEffect(() => {
     if (weeks && !isLoading && !isError) {
@@ -44,7 +46,6 @@ const PlayerStatsPage: React.FC = () => {
     setSortConfig({ key, direction });
   };
 
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -55,24 +56,50 @@ const PlayerStatsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] w-full flex flex-col items-center p-8">
-        <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
-          Estatísticas dos Jogadores em {year}
-        </h1>
+      <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
+        Estatísticas dos Jogadores em {year}
+      </h1>
       <div className="overflow-x-auto w-full max-w-[1200px]">
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-           <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('name')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('points')}>Pontos</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('wins')}>Vitórias</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('draws')}>Empates</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('losses')}>Derrotas</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('pointsPercentage')}>Porcentagem de Pontos</th>
+            <tr>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('name')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('points')}>
+                Pontos
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('wins')}>
+                Vitórias
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('draws')}>
+                Empates
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('losses')}>
+                Derrotas
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('pointsPercentage')}>
+                Porcentagem de Pontos
+              </th>
             </tr>
           </thead>
           <tbody>
             {sortedStats.map(({ name, points, wins, draws, losses, pointsPercentage }, index) => (
-              <tr key={index} className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
+              <tr
+                key={index}
+                className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
                 <td className="px-4 py-2">{name}</td>
                 <td className="px-4 py-2">{points}</td>
                 <td className="px-4 py-2">{wins}</td>

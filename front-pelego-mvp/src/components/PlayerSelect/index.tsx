@@ -19,9 +19,7 @@ const customStyles: StylesConfig<SelectOption, false> = {
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isFocused
-      ? 'hsl(var(--accent))'
-      : 'hsl(var(--background))',
+    backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--background))',
     color: 'hsl(var(--foreground))',
     '&:hover': {
       backgroundColor: 'hsl(var(--accent))',
@@ -102,9 +100,7 @@ export const PlayerSelect: React.FC<PlayerSelectProps> = ({
         className="react-select-container"
         classNamePrefix="react-select"
       />
-      {error && (
-        <p className={cn('text-xs text-destructive mt-1')}>{error}</p>
-      )}
+      {error && <p className={cn('text-xs text-destructive mt-1')}>{error}</p>}
     </div>
   );
 };

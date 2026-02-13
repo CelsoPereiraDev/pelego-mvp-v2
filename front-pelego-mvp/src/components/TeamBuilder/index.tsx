@@ -38,9 +38,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({
 
   // Calculate team statistics
   const teamStats = useMemo(() => {
-    const players = availablePlayers.filter((p) =>
-      selectedPlayerIds.includes(p.id)
-    );
+    const players = availablePlayers.filter((p) => selectedPlayerIds.includes(p.id));
 
     if (players.length === 0) {
       return { count: 0, avgOverall: 0 };
@@ -85,9 +83,7 @@ export const TeamBuilder: React.FC<TeamBuilderProps> = ({
             </div>
           )}
         </CardTitle>
-        <CardDescription>
-          Selecione os jogadores que farão parte deste time
-        </CardDescription>
+        <CardDescription>Selecione os jogadores que farão parte deste time</CardDescription>
       </CardHeader>
       <CardContent>
         <PlayerMultiSelect

@@ -1,20 +1,35 @@
-import { CreateMatch } from "@/app/match/page";
 import SelectWithSearch from '@/components/SelectWithSearch';
-import { PlayerResponse } from "@/types/player";
+import { CreateMatchForm } from '@/types/forms';
+import { PlayerResponse } from '@/types/player';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { useEffect, useMemo, useState } from "react";
-import { Control, Controller, FieldArrayWithId, UseFieldArrayRemove, useWatch } from "react-hook-form";
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Control,
+  Controller,
+  FieldArrayWithId,
+  UseFieldArrayRemove,
+  useWatch,
+} from 'react-hook-form';
 
 interface MatchFormProps {
   index: number;
-  control: Control<CreateMatch>;
-  teamFields: FieldArrayWithId<CreateMatch, "teams", "id">[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<CreateMatchForm, any>;
+  teamFields: FieldArrayWithId<CreateMatchForm, 'teams', 'id'>[];
   players: PlayerResponse[];
   removeMatch: UseFieldArrayRemove;
   disabled?: boolean;
 }
 
-export const MatchForm = ({ index, control, teamFields, players, removeMatch, disabled = false }: MatchFormProps) => {
+export const MatchForm = ({
+  index,
+  control,
+  teamFields,
+  players,
+  removeMatch,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  disabled = false,
+}: MatchFormProps) => {
   const homeTeamId = useWatch({ control, name: `matches.${index}.homeTeamId` });
   const awayTeamId = useWatch({ control, name: `matches.${index}.awayTeamId` });
   const homeGoals = useWatch({ control, name: `matches.${index}.homeGoals.goalsCount` });
@@ -29,16 +44,18 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
   }, [awayTeamId, teamFields]);
 
   const teamsOptions = useMemo(() => {
-  return teamFields.map((team, idx) => {
-    return {
-      label: `Time ${idx + 1}`,
-      value: idx,
-    };
-  });
-}, [teamFields]);
+    return teamFields.map((team, idx) => {
+      return {
+        label: `Time ${idx + 1}`,
+        value: idx,
+      };
+    });
+  }, [teamFields]);
 
-
-  const goalsOptions = Array.from({ length: 10 }, (_, i) => ({ label: i.toString(), value: i.toString() }));
+  const goalsOptions = Array.from({ length: 10 }, (_, i) => ({
+    label: i.toString(),
+    value: i.toString(),
+  }));
 
   const [homeGoalsInputs, setHomeGoalsInputs] = useState<number[]>([]);
   const [awayGoalsInputs, setAwayGoalsInputs] = useState<number[]>([]);
@@ -57,10 +74,10 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
 
   const playerOptions = (playerIds: string[]) => {
     return [
-      { label: "GC", value: "GC" },
+      { label: 'GC', value: 'GC' },
       ...players
-        .filter(player => playerIds.includes(player.id))
-        .map(player => ({ label: player.name, value: player.id }))
+        .filter((player) => playerIds.includes(player.id))
+        .map((player) => ({ label: player.name, value: player.id })),
     ];
   };
 
@@ -82,8 +99,12 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                 render={({ field }) => (
                   <SelectWithSearch
                     options={teamsOptions}
-                    value={teamsOptions.find((option) => option.value === parseInt(field.value)) || null}
-                    onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                    value={
+                      teamsOptions.find((option) => option.value === parseInt(field.value)) || null
+                    }
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption ? selectedOption.value : null)
+                    }
                   />
                 )}
               />
@@ -96,14 +117,16 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                   <SelectWithSearch
                     options={goalsOptions}
                     value={goalsOptions.find((option) => option.value === field.value) || null}
-                    onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption ? selectedOption.value : null)
+                    }
                   />
                 )}
               />
             </div>
           </div>
           {homeGoalsInputs.map((_, goalIndex) => (
-             <div key={`away-goal-${goalIndex}`} className="flex flex-col gap-2">
+            <div key={`away-goal-${goalIndex}`} className="flex flex-col gap-2">
               <div className="flex flex-row gap-2 items-center">
                 <span>Gol</span>
                 <div className="w-[150px]">
@@ -114,12 +137,16 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                       <SelectWithSearch
                         placeholder="Jogador"
                         options={playerOptions(homePlayersForTeam)}
-                        value={playerOptions(homePlayersForTeam).find(option => option.value === field.value) || null}
+                        value={
+                          playerOptions(homePlayersForTeam).find(
+                            (option) => option.value === field.value,
+                          ) || null
+                        }
                         onChange={(selectedOption) => {
                           field.onChange(selectedOption ? selectedOption.value : null);
-                          setHomeGoalsGC(prev => {
+                          setHomeGoalsGC((prev) => {
                             const newGC = [...prev];
-                            newGC[goalIndex] = selectedOption?.value === "GC";
+                            newGC[goalIndex] = selectedOption?.value === 'GC';
                             return newGC;
                           });
                         }}
@@ -135,13 +162,18 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                       <SelectWithSearch
                         placeholder="Gols"
                         options={goalsOptions}
-                        value={goalsOptions.find((option) => option.value === String(field.value)) || null}
-                        onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                        value={
+                          goalsOptions.find((option) => option.value === String(field.value)) ||
+                          null
+                        }
+                        onChange={(selectedOption) =>
+                          field.onChange(selectedOption ? selectedOption.value : null)
+                        }
                       />
                     )}
                   />
                 </div>
-                
+
                 {homeGoalsGC[goalIndex] && (
                   <div className="w-[150px]">
                     <Controller
@@ -150,8 +182,14 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                       render={({ field }) => (
                         <SelectWithSearch
                           options={playerOptions(awayPlayersForTeam)}
-                          value={playerOptions(awayPlayersForTeam).find(option => option.value === field.value) || null}
-                          onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                          value={
+                            playerOptions(awayPlayersForTeam).find(
+                              (option) => option.value === field.value,
+                            ) || null
+                          }
+                          onChange={(selectedOption) =>
+                            field.onChange(selectedOption ? selectedOption.value : null)
+                          }
                         />
                       )}
                     />
@@ -165,9 +203,13 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                   name={`matches.${index}.homeAssists.${goalIndex}.playerId`}
                   render={({ field }) => (
                     <SelectWithSearch
-                      placeholder='Assists.'
+                      placeholder="Assists."
                       options={playerOptions(homePlayersForTeam)}
-                      value={playerOptions(homePlayersForTeam).find(option => option.value === field.value) || null}
+                      value={
+                        playerOptions(homePlayersForTeam).find(
+                          (option) => option.value === field.value,
+                        ) || null
+                      }
                       onChange={(selectedOption) => {
                         field.onChange(selectedOption ? selectedOption.value : null);
                       }}
@@ -179,14 +221,18 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                   name={`matches.${index}.homeAssists.${goalIndex}.assists`}
                   render={({ field }) => (
                     <SelectWithSearch
-                      placeholder='Jogador'
+                      placeholder="Jogador"
                       options={goalsOptions}
-                      value={goalsOptions.find((option) => option.value === String(field.value)) || null}
-                      onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                      value={
+                        goalsOptions.find((option) => option.value === String(field.value)) || null
+                      }
+                      onChange={(selectedOption) =>
+                        field.onChange(selectedOption ? selectedOption.value : null)
+                      }
                     />
                   )}
                 />
-               </div>
+              </div>
             </div>
           ))}
         </div>
@@ -201,7 +247,9 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                   <SelectWithSearch
                     options={goalsOptions}
                     value={goalsOptions.find((option) => option.value === field.value) || null}
-                    onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption ? selectedOption.value : null)
+                    }
                   />
                 )}
               />
@@ -213,8 +261,12 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                 render={({ field }) => (
                   <SelectWithSearch
                     options={teamsOptions}
-                    value={teamsOptions.find((option) => option.value === parseInt(field.value)) || null}
-                    onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                    value={
+                      teamsOptions.find((option) => option.value === parseInt(field.value)) || null
+                    }
+                    onChange={(selectedOption) =>
+                      field.onChange(selectedOption ? selectedOption.value : null)
+                    }
                   />
                 )}
               />
@@ -232,8 +284,13 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                       <SelectWithSearch
                         placeholder="Gols"
                         options={goalsOptions}
-                        value={goalsOptions.find((option) => option.value === String(field.value)) || null}
-                        onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                        value={
+                          goalsOptions.find((option) => option.value === String(field.value)) ||
+                          null
+                        }
+                        onChange={(selectedOption) =>
+                          field.onChange(selectedOption ? selectedOption.value : null)
+                        }
                       />
                     )}
                   />
@@ -246,12 +303,16 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                       <SelectWithSearch
                         placeholder="Jogador"
                         options={playerOptions(awayPlayersForTeam)}
-                        value={playerOptions(awayPlayersForTeam).find(option => option.value === field.value) || null}
+                        value={
+                          playerOptions(awayPlayersForTeam).find(
+                            (option) => option.value === field.value,
+                          ) || null
+                        }
                         onChange={(selectedOption) => {
                           field.onChange(selectedOption ? selectedOption.value : null);
-                          setAwayGoalsGC(prev => {
+                          setAwayGoalsGC((prev) => {
                             const newGC = [...prev];
-                            newGC[goalIndex] = selectedOption?.value === "GC";
+                            newGC[goalIndex] = selectedOption?.value === 'GC';
                             return newGC;
                           });
                         }}
@@ -267,25 +328,35 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                       render={({ field }) => (
                         <SelectWithSearch
                           options={playerOptions(homePlayersForTeam)}
-                          value={playerOptions(homePlayersForTeam).find(option => option.value === field.value) || null}
-                          onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                          value={
+                            playerOptions(homePlayersForTeam).find(
+                              (option) => option.value === field.value,
+                            ) || null
+                          }
+                          onChange={(selectedOption) =>
+                            field.onChange(selectedOption ? selectedOption.value : null)
+                          }
                         />
                       )}
                     />
                   </div>
                 )}
               </div>
-               <div className="flex flex-row gap-2 items-center">
+              <div className="flex flex-row gap-2 items-center">
                 <span>Assist.</span>
                 <Controller
                   control={control}
                   name={`matches.${index}.awayAssists.${goalIndex}.assists`}
                   render={({ field }) => (
                     <SelectWithSearch
-                      placeholder='Assists.'
+                      placeholder="Assists."
                       options={goalsOptions}
-                      value={goalsOptions.find((option) => option.value === String(field.value)) || null}
-                      onChange={(selectedOption) => field.onChange(selectedOption ? selectedOption.value : null)}
+                      value={
+                        goalsOptions.find((option) => option.value === String(field.value)) || null
+                      }
+                      onChange={(selectedOption) =>
+                        field.onChange(selectedOption ? selectedOption.value : null)
+                      }
                     />
                   )}
                 />
@@ -294,16 +365,20 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
                   name={`matches.${index}.awayAssists.${goalIndex}.playerId`}
                   render={({ field }) => (
                     <SelectWithSearch
-                      placeholder='Jogador'
+                      placeholder="Jogador"
                       options={playerOptions(awayPlayersForTeam)}
-                      value={playerOptions(awayPlayersForTeam).find(option => option.value === field.value) || null}
+                      value={
+                        playerOptions(awayPlayersForTeam).find(
+                          (option) => option.value === field.value,
+                        ) || null
+                      }
                       onChange={(selectedOption) => {
                         field.onChange(selectedOption ? selectedOption.value : null);
                       }}
                     />
                   )}
                 />
-               </div>
+              </div>
             </div>
           ))}
         </div>
@@ -311,7 +386,5 @@ export const MatchForm = ({ index, control, teamFields, players, removeMatch, di
     </div>
   );
 };
-
-
 
 export default MatchForm;

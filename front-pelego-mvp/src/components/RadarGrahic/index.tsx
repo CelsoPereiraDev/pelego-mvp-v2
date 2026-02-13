@@ -1,18 +1,37 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import React from "react";
-import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import React from 'react';
+import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from 'recharts';
 
 interface RadarGraphicProps {
   title: string;
   description: string;
   footer?: React.ReactNode;
-  chartData: Array<{ stat: string, valor: number }>;
+  chartData: Array<{ stat: string; valor: number }>;
   chartConfig: ChartConfig;
   maxDomain?: number;
 }
 
-export function RadarGraphic({ title, description, footer, chartData, chartConfig, maxDomain = 100 }: RadarGraphicProps) {
+export function RadarGraphic({
+  title,
+  description,
+  footer,
+  chartData,
+  chartConfig,
+  maxDomain = 100,
+}: RadarGraphicProps) {
   return (
     <Card className="w-auto min-w-[345px] h-min">
       <CardHeader className="items-center pb-4 ">
@@ -22,10 +41,7 @@ export function RadarGraphic({ title, description, footer, chartData, chartConfi
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square w-full"
-        >
+        <ChartContainer config={chartConfig} className="mx-auto aspect-square w-full">
           <RadarChart data={chartData}>
             <PolarGrid stroke="hsl(var(--muted-foreground))" />
             <PolarAngleAxis dataKey="stat" stroke="hsl(var(--foreground))" />
@@ -44,9 +60,7 @@ export function RadarGraphic({ title, description, footer, chartData, chartConfi
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
           </RadarChart>
         </ChartContainer>
-        <CardFooter>
-          {footer}
-        </CardFooter>
+        <CardFooter>{footer}</CardFooter>
       </CardContent>
     </Card>
   );

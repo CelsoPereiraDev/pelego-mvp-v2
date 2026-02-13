@@ -1,6 +1,6 @@
-import { MatchResponse } from "@/types/match";
-import { PlayerResponse } from "@/types/player";
-import { WeekResponse } from "@/types/weeks";
+import { MatchResponse } from '@/types/match';
+import { PlayerResponse } from '@/types/player';
+import { WeekResponse } from '@/types/weeks';
 
 interface InteractionStats {
   points: number;
@@ -44,22 +44,55 @@ interface PlayerStats {
   teamGoals: number;
 }
 
-type NumericPlayerStatsKeys = Exclude<keyof PlayerStats, 
-  'name' | 'totalWeeks' | 'pointsWithPlayers' | 'pointsAgainstPlayers' | 'pointsGivenByPlayers' | 
-  'worstPerformingTeammates' | 'playWith' | 'playAgainst' | 'top5PointsWithPlayers' | 
-  'top5PointsAgainstPlayers' | 'top5PointsGivenByPlayers' | 'top5WorstPerformingTeammates' | 'rankings'>;
+type NumericPlayerStatsKeys = Exclude<
+  keyof PlayerStats,
+  | 'name'
+  | 'totalWeeks'
+  | 'pointsWithPlayers'
+  | 'pointsAgainstPlayers'
+  | 'pointsGivenByPlayers'
+  | 'worstPerformingTeammates'
+  | 'playWith'
+  | 'playAgainst'
+  | 'top5PointsWithPlayers'
+  | 'top5PointsAgainstPlayers'
+  | 'top5PointsGivenByPlayers'
+  | 'top5WorstPerformingTeammates'
+  | 'rankings'
+>;
 
 type PlayerStatsMap = { [playerId: string]: PlayerStats };
 
 const ASCENDING_ORDER_ASPECTS: NumericPlayerStatsKeys[] = [
-  'losses', 'goalsConceded', 'averagePointsPerMatch', 'totalGoalsConcededPerWeek', 'averageGoalsConcededPerWeek', 'averageGoalsConceded'
+  'losses',
+  'goalsConceded',
+  'averagePointsPerMatch',
+  'totalGoalsConcededPerWeek',
+  'averageGoalsConcededPerWeek',
+  'averageGoalsConceded',
 ];
 
 const NUMERIC_ASPECTS: NumericPlayerStatsKeys[] = [
-  'matches', 'wins', 'losses', 'draws', 'points', 'goals', 'ownGoals', 'assists', 'goalsConceded',
-  'averageGoalsConceded', 'averagePointsPerMatch', 'pointsPercentage', 'totalGoalsPerWeek', 'totalAssistsPerWeek',
-  'totalPointsPerWeek', 'totalGoalsConcededPerWeek', 'averagePointsPerWeek', 'averageGoalsPerWeek', 'averageAssistsPerWeek', 
-  'averageGoalsConcededPerWeek'
+  'matches',
+  'wins',
+  'losses',
+  'draws',
+  'points',
+  'goals',
+  'ownGoals',
+  'assists',
+  'goalsConceded',
+  'averageGoalsConceded',
+  'averagePointsPerMatch',
+  'pointsPercentage',
+  'totalGoalsPerWeek',
+  'totalAssistsPerWeek',
+  'totalPointsPerWeek',
+  'totalGoalsConcededPerWeek',
+  'averagePointsPerWeek',
+  'averageGoalsPerWeek',
+  'averageAssistsPerWeek',
+  'averageGoalsConcededPerWeek',
 ];
 
 const initializePlayerStats = (player: PlayerResponse): PlayerStats => ({
@@ -103,7 +136,7 @@ const updatePlayerStats = (
   isWin: boolean,
   isDraw: boolean,
   points: number,
-  goalsConceded: number
+  goalsConceded: number,
 ) => {
   playerStats.matches += 1;
   if (isWin) {
@@ -122,7 +155,7 @@ const updatePlayerStats = (
 const updateInteractionStats = (
   interactionStats: Record<string, InteractionStats>,
   playerName: string,
-  points: number
+  points: number,
 ) => {
   if (!interactionStats[playerName]) {
     interactionStats[playerName] = { points: 0, matches: 0 };
@@ -137,9 +170,9 @@ const updatePlayerInteractionStats = (
   teammates: PlayerResponse[],
   opponents: PlayerResponse[],
   points: number,
-  isWorstPerforming: boolean
+  isWorstPerforming: boolean,
 ) => {
-  teammates.forEach(teammate => {
+  teammates.forEach((teammate) => {
     if (teammate.id !== playerId) {
       const key = teammate.name;
       const interaction = isWorstPerforming
@@ -149,7 +182,7 @@ const updatePlayerInteractionStats = (
     }
   });
 
-  opponents.forEach(opponent => {
+  opponents.forEach((opponent) => {
     if (opponent.id !== playerId) {
       const key = opponent.name;
       updateInteractionStats(playerStatsMap[playerId].pointsAgainstPlayers, key, points);
@@ -160,9 +193,11 @@ const updatePlayerInteractionStats = (
 const calculateRankings = (playerStatsMap: PlayerStatsMap, numberOfWeeks: number) => {
   const minWeeksRequired = numberOfWeeks * 0.2501;
 
-  const filteredStatsList = Object.values(playerStatsMap).filter(playerStats => playerStats.totalWeeks.size >= minWeeksRequired);
+  const filteredStatsList = Object.values(playerStatsMap).filter(
+    (playerStats) => playerStats.totalWeeks.size >= minWeeksRequired,
+  );
 
-  NUMERIC_ASPECTS.forEach(aspect => {
+  NUMERIC_ASPECTS.forEach((aspect) => {
     filteredStatsList.sort((a, b) => {
       const aValue = a[aspect] ?? 0;
       const bValue = b[aspect] ?? 0;
@@ -195,12 +230,8 @@ const calculateRankings = (playerStatsMap: PlayerStatsMap, numberOfWeeks: number
   });
 };
 
-
-const processGoalsAndAssists = (
-  match: MatchResponse,
-  playerStatsMap: PlayerStatsMap
-) => {
-  match.goals?.forEach(goal => {
+const processGoalsAndAssists = (match: MatchResponse, playerStatsMap: PlayerStatsMap) => {
+  match.goals?.forEach((goal) => {
     if (goal.playerId) {
       playerStatsMap[goal.playerId].goals += goal.goals;
       playerStatsMap[goal.playerId].totalGoalsPerWeek += goal.goals;
@@ -210,7 +241,7 @@ const processGoalsAndAssists = (
     }
   });
 
-  match.assists?.forEach(assist => {
+  match.assists?.forEach((assist) => {
     if (assist.playerId) {
       playerStatsMap[assist.playerId].assists += assist.assists;
       playerStatsMap[assist.playerId].totalAssistsPerWeek += assist.assists;
@@ -223,69 +254,121 @@ const calculatePlayersStats = (weeks: WeekResponse[]): PlayerStatsMap => {
   const processedMatches = new Set<string>();
 
   weeks?.forEach((week) => {
-    week.teams?.flatMap((team) => team.matchesHome?.concat(team.matchesAway) ?? []).forEach((match) => {
-      if (!processedMatches.has(match.id)) {
-        processedMatches.add(match.id);
+    week.teams
+      ?.flatMap((team) => team.matchesHome?.concat(team.matchesAway) ?? [])
+      .forEach((match) => {
+        if (!processedMatches.has(match.id)) {
+          processedMatches.add(match.id);
 
-        let homePoints = 0;
-        let awayPoints = 0;
+          let homePoints = 0;
+          let awayPoints = 0;
 
-        if (match.result) {
-          homePoints = match.result.homeGoals > match.result.awayGoals ? 3 : match.result.homeGoals === match.result.awayGoals ? 1 : 0;
-          awayPoints = match.result.awayGoals > match.result.homeGoals ? 3 : match.result.awayGoals === match.result.homeGoals ? 1 : 0;
+          if (match.result) {
+            homePoints =
+              match.result.homeGoals > match.result.awayGoals
+                ? 3
+                : match.result.homeGoals === match.result.awayGoals
+                  ? 1
+                  : 0;
+            awayPoints =
+              match.result.awayGoals > match.result.homeGoals
+                ? 3
+                : match.result.awayGoals === match.result.homeGoals
+                  ? 1
+                  : 0;
+          }
+
+          const homeTeam = week.teams?.find((team) => team.id === match.homeTeamId);
+          const awayTeam = week.teams?.find((team) => team.id === match.awayTeamId);
+
+          homeTeam?.players?.forEach((member) => {
+            const playerId = member.player.id;
+            if (!playerStatsMap[playerId]) {
+              playerStatsMap[playerId] = initializePlayerStats(member.player);
+            }
+            playerStatsMap[playerId].teamGoals += match.result?.homeGoals ?? 0;
+          });
+
+          awayTeam?.players?.forEach((member) => {
+            const playerId = member.player.id;
+            if (!playerStatsMap[playerId]) {
+              playerStatsMap[playerId] = initializePlayerStats(member.player);
+            }
+            playerStatsMap[playerId].teamGoals += match.result?.awayGoals ?? 0;
+          });
+
+          const allPlayers = new Set<PlayerResponse>();
+          homeTeam?.players?.forEach((member) => allPlayers.add(member.player));
+          awayTeam?.players?.forEach((member) => allPlayers.add(member.player));
+          match.goals?.forEach((goal) => {
+            if (goal.player) allPlayers.add(goal.player);
+            if (goal.ownGoalPlayer) allPlayers.add(goal.ownGoalPlayer);
+          });
+
+          allPlayers.forEach((player) => {
+            if (!playerStatsMap[player.id]) {
+              playerStatsMap[player.id] = initializePlayerStats(player);
+            }
+            playerStatsMap[player.id].totalWeeks.add(week.id);
+          });
+
+          homeTeam?.players?.forEach((member) => {
+            const playerId = member.player.id;
+            updatePlayerStats(
+              playerStatsMap[playerId],
+              homePoints === 3,
+              homePoints === 1,
+              homePoints,
+              match.result?.awayGoals ?? 0,
+            );
+            updatePlayerInteractionStats(
+              playerId,
+              playerStatsMap,
+              homeTeam.players.map((p) => p.player),
+              awayTeam?.players?.map((p) => p.player) ?? [],
+              homePoints,
+              false,
+            );
+            updatePlayerInteractionStats(
+              playerId,
+              playerStatsMap,
+              homeTeam.players.map((p) => p.player),
+              awayTeam?.players?.map((p) => p.player) ?? [],
+              homePoints,
+              true,
+            );
+          });
+
+          awayTeam?.players?.forEach((member) => {
+            const playerId = member.player.id;
+            updatePlayerStats(
+              playerStatsMap[playerId],
+              awayPoints === 3,
+              awayPoints === 1,
+              awayPoints,
+              match.result?.homeGoals ?? 0,
+            );
+            updatePlayerInteractionStats(
+              playerId,
+              playerStatsMap,
+              awayTeam.players.map((p) => p.player),
+              homeTeam?.players?.map((p) => p.player) ?? [],
+              awayPoints,
+              false,
+            );
+            updatePlayerInteractionStats(
+              playerId,
+              playerStatsMap,
+              awayTeam.players.map((p) => p.player),
+              homeTeam?.players?.map((p) => p.player) ?? [],
+              awayPoints,
+              true,
+            );
+          });
+
+          processGoalsAndAssists(match, playerStatsMap);
         }
-
-        const homeTeam = week.teams?.find(team => team.id === match.homeTeamId);
-        const awayTeam = week.teams?.find(team => team.id === match.awayTeamId);
-
-        homeTeam?.players?.forEach(member => {
-          const playerId = member.player.id;
-          if (!playerStatsMap[playerId]) {
-            playerStatsMap[playerId] = initializePlayerStats(member.player);
-          }
-          playerStatsMap[playerId].teamGoals += match.result?.homeGoals ?? 0;
-        });
-
-        awayTeam?.players?.forEach(member => {
-          const playerId = member.player.id;
-          if (!playerStatsMap[playerId]) {
-            playerStatsMap[playerId] = initializePlayerStats(member.player);
-          }
-          playerStatsMap[playerId].teamGoals += match.result?.awayGoals ?? 0;
-        });
-
-        const allPlayers = new Set<PlayerResponse>();
-        homeTeam?.players?.forEach(member => allPlayers.add(member.player));
-        awayTeam?.players?.forEach(member => allPlayers.add(member.player));
-        match.goals?.forEach(goal => {
-          if (goal.player) allPlayers.add(goal.player);
-          if (goal.ownGoalPlayer) allPlayers.add(goal.ownGoalPlayer);
-        });
-
-        allPlayers.forEach(player => {
-          if (!playerStatsMap[player.id]) {
-            playerStatsMap[player.id] = initializePlayerStats(player);
-          }
-          playerStatsMap[player.id].totalWeeks.add(week.id);
-        });
-
-        homeTeam?.players?.forEach(member => {
-          const playerId = member.player.id;
-          updatePlayerStats(playerStatsMap[playerId], homePoints === 3, homePoints === 1, homePoints, match.result?.awayGoals ?? 0);
-          updatePlayerInteractionStats(playerId, playerStatsMap, homeTeam.players.map(p => p.player), awayTeam?.players?.map(p => p.player) ?? [], homePoints, false);
-          updatePlayerInteractionStats(playerId, playerStatsMap, homeTeam.players.map(p => p.player), awayTeam?.players?.map(p => p.player) ?? [], homePoints, true);
-        });
-
-        awayTeam?.players?.forEach(member => {
-          const playerId = member.player.id;
-          updatePlayerStats(playerStatsMap[playerId], awayPoints === 3, awayPoints === 1, awayPoints, match.result?.homeGoals ?? 0);
-          updatePlayerInteractionStats(playerId, playerStatsMap, awayTeam.players.map(p => p.player), homeTeam?.players?.map(p => p.player) ?? [], awayPoints, false);
-          updatePlayerInteractionStats(playerId, playerStatsMap, awayTeam.players.map(p => p.player), homeTeam?.players?.map(p => p.player) ?? [], awayPoints, true);
-        });
-
-        processGoalsAndAssists(match, playerStatsMap);
-      }
-    });
+      });
   });
 
   calculateAverageStats(playerStatsMap);
@@ -295,18 +378,32 @@ const calculatePlayersStats = (weeks: WeekResponse[]): PlayerStatsMap => {
 };
 
 const calculateAverageStats = (playerStatsMap: PlayerStatsMap) => {
-  Object.values(playerStatsMap).forEach(playerStats => {
+  Object.values(playerStatsMap).forEach((playerStats) => {
     const totalWeeks = playerStats.totalWeeks.size;
     if (playerStats.matches > 0) {
-      playerStats.averageGoalsConceded = parseFloat((playerStats.goalsConceded / playerStats.matches).toFixed(2));
-      playerStats.averagePointsPerMatch = parseFloat((playerStats.points / playerStats.matches).toFixed(2));
-      playerStats.pointsPercentage = parseFloat(((playerStats.points / (playerStats.matches * 3)) * 100).toFixed(2));
+      playerStats.averageGoalsConceded = parseFloat(
+        (playerStats.goalsConceded / playerStats.matches).toFixed(2),
+      );
+      playerStats.averagePointsPerMatch = parseFloat(
+        (playerStats.points / playerStats.matches).toFixed(2),
+      );
+      playerStats.pointsPercentage = parseFloat(
+        ((playerStats.points / (playerStats.matches * 3)) * 100).toFixed(2),
+      );
     }
     if (totalWeeks > 0) {
-      playerStats.averagePointsPerWeek = parseFloat((playerStats.totalPointsPerWeek / totalWeeks).toFixed(2));
-      playerStats.averageGoalsPerWeek = parseFloat((playerStats.totalGoalsPerWeek / totalWeeks).toFixed(2));
-      playerStats.averageAssistsPerWeek = parseFloat((playerStats.totalAssistsPerWeek / totalWeeks).toFixed(2));
-      playerStats.averageGoalsConcededPerWeek = parseFloat((playerStats.totalGoalsConcededPerWeek / totalWeeks).toFixed(2));
+      playerStats.averagePointsPerWeek = parseFloat(
+        (playerStats.totalPointsPerWeek / totalWeeks).toFixed(2),
+      );
+      playerStats.averageGoalsPerWeek = parseFloat(
+        (playerStats.totalGoalsPerWeek / totalWeeks).toFixed(2),
+      );
+      playerStats.averageAssistsPerWeek = parseFloat(
+        (playerStats.totalAssistsPerWeek / totalWeeks).toFixed(2),
+      );
+      playerStats.averageGoalsConcededPerWeek = parseFloat(
+        (playerStats.totalGoalsConcededPerWeek / totalWeeks).toFixed(2),
+      );
     }
 
     playerStats.playWith = Object.entries(playerStats.pointsWithPlayers)
@@ -315,7 +412,7 @@ const calculateAverageStats = (playerStatsMap: PlayerStatsMap) => {
         points: data.points,
         pointsExpected: data.matches * 3,
       }))
-      .filter(data => data.pointsExpected >= 39); // Jogaram pelo menos 2 vezes juntos
+      .filter((data) => data.pointsExpected >= 39); // Jogaram pelo menos 2 vezes juntos
 
     playerStats.playAgainst = Object.entries(playerStats.pointsAgainstPlayers)
       .map(([name, data]) => ({
@@ -323,29 +420,30 @@ const calculateAverageStats = (playerStatsMap: PlayerStatsMap) => {
         points: data.points,
         pointsExpected: data.matches * 3,
       }))
-      .filter(data => data.pointsExpected >= 39); // Jogaram pelo menos 2 vezes juntos
+      .filter((data) => data.pointsExpected >= 39); // Jogaram pelo menos 2 vezes juntos
 
     playerStats.top5PointsWithPlayers = playerStats.playWith
-      .sort((a, b) => (b.points / b.pointsExpected) - (a.points / a.pointsExpected))
+      .sort((a, b) => b.points / b.pointsExpected - a.points / a.pointsExpected)
       .slice(0, 5);
-      
 
     playerStats.top5PointsAgainstPlayers = playerStats.playAgainst
-      .sort((a, b) => (a.points / a.pointsExpected) - (b.points / b.pointsExpected))
+      .sort((a, b) => a.points / a.pointsExpected - b.points / b.pointsExpected)
       .slice(0, 5);
 
     playerStats.top5PointsGivenByPlayers = playerStats.playAgainst
-      .sort((a, b) => (b.points / b.pointsExpected) - (a.points / a.pointsExpected))
+      .sort((a, b) => b.points / b.pointsExpected - a.points / a.pointsExpected)
       .slice(0, 5);
 
     playerStats.top5WorstPerformingTeammates = playerStats.playWith
-      .sort((a, b) => (a.points / a.pointsExpected) - (b.points / b.pointsExpected))
+      .sort((a, b) => a.points / a.pointsExpected - b.points / b.pointsExpected)
       .slice(0, 5);
   });
 };
 
-
-export const calculatePlayerStatsForPlayer = (weeks: WeekResponse[], playerId: string): PlayerStats | null => {
+export const calculatePlayerStatsForPlayer = (
+  weeks: WeekResponse[],
+  playerId: string,
+): PlayerStats | null => {
   const playerStatsMap = calculatePlayersStats(weeks);
 
   if (!playerStatsMap[playerId]) {

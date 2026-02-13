@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { Button } from '@/components/ui/button';
 import { useWeeksByDate } from '@/services/weeks/useWeeksByDate';
@@ -25,12 +25,25 @@ const AssistLeaderPage: React.FC = () => {
   const { weeks, isLoading, isError } = useWeeksByDate(year.toString(), month?.toString());
 
   const [concededGoalsStats, setConcededGoalsStats] = useState<GoalsConcededStats[]>([]);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof GoalsConcededStats, direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof GoalsConcededStats;
+    direction: 'asc' | 'desc';
+  } | null>(null);
 
   function mapMonthNumberToText(monthNumber: number) {
     const months = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
     ];
     return months[monthNumber - 1];
   }
@@ -99,27 +112,51 @@ const AssistLeaderPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--background))] w-full flex flex-col items-center p-8">
-      <div className='flex justify-between w-full max-w-[1200px]'>
+      <div className="flex justify-between w-full max-w-[1200px]">
         <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-        <ChevronLeftIcon className="h-4 w-4" />
-      </Button>
-      <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
-        Melhores Defensores de {month ? `${mapMonthNumberToText(month)}` : `Ano ${year}`}
-      </h1>
-      <Button variant="outline" size="icon" onClick={goToNextMonth}>
-        <ChevronRightIcon className="h-4 w-4" />
-      </Button>
+          <ChevronLeftIcon className="h-4 w-4" />
+        </Button>
+        <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
+          Melhores Defensores de {month ? `${mapMonthNumberToText(month)}` : `Ano ${year}`}
+        </h1>
+        <Button variant="outline" size="icon" onClick={goToNextMonth}>
+          <ChevronRightIcon className="h-4 w-4" />
+        </Button>
       </div>
       <div className="overflow-x-auto w-full max-w-[1200px]">
         <table className="w-full border-collapse bg-[hsl(var(--card))] text-[hsl(var(--foreground))] shadow-md rounded-lg border border-[hsl(var(--border))] text-nowrap">
           <thead className="bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
             <tr>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('playerName')}>Nome</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('position')}>Posição</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('goalsConceded')}>Gols Sofridos</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('averageGoalsConceded')}>Média de GS por partida</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('averageGoalsConcededPerWeek')}>Média de GS Por semana</th>
-              <th className="px-4 py-2 text-left cursor-pointer" onClick={() => requestSort('weeksPlayed')}>Semanas jogadas</th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('playerName')}>
+                Nome
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('position')}>
+                Posição
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('goalsConceded')}>
+                Gols Sofridos
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('averageGoalsConceded')}>
+                Média de GS por partida
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('averageGoalsConcededPerWeek')}>
+                Média de GS Por semana
+              </th>
+              <th
+                className="px-4 py-2 text-left cursor-pointer"
+                onClick={() => requestSort('weeksPlayed')}>
+                Semanas jogadas
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -127,16 +164,17 @@ const AssistLeaderPage: React.FC = () => {
               weeks && player.weeksPlayed >= weeks.length / 2 ? (
                 <tr
                   key={index}
-                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors"
-                >
+                  className="odd:bg-[hsl(var(--background))] even:bg-[hsl(var(--card))] hover:bg-[hsl(var(--accent))] transition-colors">
                   <td className="px-4 py-2">{player.playerName}</td>
                   <td className="px-4 py-2">{player.position}</td>
                   <td className="px-4 py-2">{player.goalsConceded}</td>
                   <td className="px-4 py-2">{player.averageGoalsConceded.toFixed(2)}</td>
-                  <td className="px-4 py-2">{(player.goalsConceded / player.weeksPlayed).toFixed(2)}</td>
+                  <td className="px-4 py-2">
+                    {(player.goalsConceded / player.weeksPlayed).toFixed(2)}
+                  </td>
                   <td className="px-4 py-2">{player.weeksPlayed}</td>
                 </tr>
-              ) : null
+              ) : null,
             )}
           </tbody>
         </table>

@@ -1,5 +1,4 @@
 import { PlayerResponse } from '@/types/player';
-import { SelectOption } from '@/types/components';
 
 export interface TeamBuilderProps {
   teamIndex: number;

@@ -65,26 +65,29 @@ export function MatchCard({
   };
 
   // Agregar gols por jogador
-  const aggregatedGoals = match.goals.reduce((acc, goal) => {
-    let key = '';
-    let name = '';
-    let isOwnGoal = false;
+  const aggregatedGoals = match.goals.reduce(
+    (acc, goal) => {
+      let key = '';
+      let name = '';
+      let isOwnGoal = false;
 
-    if (goal.player) {
-      key = goal.player.id;
-      name = goal.player.name;
-    } else if (goal.ownGoalPlayer) {
-      key = goal.ownGoalPlayer.id + '_og';
-      name = goal.ownGoalPlayer.name;
-      isOwnGoal = true;
-    }
+      if (goal.player) {
+        key = goal.player.id;
+        name = goal.player.name;
+      } else if (goal.ownGoalPlayer) {
+        key = goal.ownGoalPlayer.id + '_og';
+        name = goal.ownGoalPlayer.name;
+        isOwnGoal = true;
+      }
 
-    if (!acc[key]) {
-      acc[key] = { name, goals: 0, isOwnGoal };
-    }
-    acc[key].goals += goal.goals;
-    return acc;
-  }, {} as Record<string, AggregatedGoal>);
+      if (!acc[key]) {
+        acc[key] = { name, goals: 0, isOwnGoal };
+      }
+      acc[key].goals += goal.goals;
+      return acc;
+    },
+    {} as Record<string, AggregatedGoal>,
+  );
 
   const goalsList = Object.values(aggregatedGoals);
 
@@ -92,17 +95,14 @@ export function MatchCard({
     <Card
       className={cn(
         'border-2 transition-base cursor-pointer hover:shadow-soft',
-        getResultBorderClass()
+        getResultBorderClass(),
       )}
       onClick={() => onMatchClick?.(match.id)}
       role="article"
-      aria-label={`Partida ${matchNumber}: Time ${homeTeamNumber} ${homeGoals} x ${awayGoals} Time ${awayTeamNumber}`}
-    >
+      aria-label={`Partida ${matchNumber}: Time ${homeTeamNumber} ${homeGoals} x ${awayGoals} Time ${awayTeamNumber}`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm text-muted-foreground">
-            Partida {matchNumber}
-          </CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">Partida {matchNumber}</CardTitle>
           <Badge variant="stat" size="sm">
             {getResultBadge()}
           </Badge>
@@ -116,9 +116,7 @@ export function MatchCard({
             <div className="flex justify-center mb-1" aria-hidden="true">
               {homeTeamIcon}
             </div>
-            <p className="text-xs text-muted-foreground font-medium">
-              Time {homeTeamNumber}
-            </p>
+            <p className="text-xs text-muted-foreground font-medium">Time {homeTeamNumber}</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -131,9 +129,7 @@ export function MatchCard({
             <div className="flex justify-center mb-1" aria-hidden="true">
               {awayTeamIcon}
             </div>
-            <p className="text-xs text-muted-foreground font-medium">
-              Time {awayTeamNumber}
-            </p>
+            <p className="text-xs text-muted-foreground font-medium">Time {awayTeamNumber}</p>
           </div>
         </div>
 
@@ -146,20 +142,14 @@ export function MatchCard({
                 Gols
               </p>
               {goalsList.map((goalData, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between text-sm"
-                >
+                <div key={i} className="flex items-center justify-between text-sm">
                   <span className="text-foreground">
                     {goalData.name}
                     {goalData.isOwnGoal && (
                       <span className="text-xs text-own-goal-indicator ml-1">(GC)</span>
                     )}
                   </span>
-                  <Badge
-                    variant={goalData.isOwnGoal ? 'ownGoal' : 'goal'}
-                    size="sm"
-                  >
+                  <Badge variant={goalData.isOwnGoal ? 'ownGoal' : 'goal'} size="sm">
                     {goalData.goals}
                   </Badge>
                 </div>
