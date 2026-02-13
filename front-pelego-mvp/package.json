@@ -42,7 +42,7 @@
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
   },
-  "proxy": "http://localhost:333",
+  "proxy": "http://localhost:3334",
   "devDependencies": {
     "@eslint/js": "^8.0.0",
     "@types/node": "^20",

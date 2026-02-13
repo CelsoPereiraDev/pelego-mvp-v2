@@ -10,6 +10,7 @@
     "install-all": "npm install && cd back-pelego-mvp && npm install && cd ../front-pelego-mvp && npm install && cd .."
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "firebase-tools": "^15.6.0"
   }
 }

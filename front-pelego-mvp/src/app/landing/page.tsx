@@ -4,15 +4,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
 
 export default function LandingPage() {
   const { signInWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      toast({ variant: 'destructive', title: 'Erro ao fazer login', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 

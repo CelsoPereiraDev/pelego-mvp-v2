@@ -122,7 +122,7 @@ const CreateWeekAndMatchesForm: React.FC = () => {
           const awayTeamIndex = parseInt(match.awayTeamId, 10);
 
           // Mapear gols
-          const mapGoals = (goals: any[]) => {
+          const mapGoals = (goals: { goals: number; playerId: string; ownGoalPlayerId?: string }[]) => {
             return goals
               .filter(goal => goal.goals !== undefined && goal.goals !== null && goal.goals !== 0)
               .map(goal => {
@@ -141,7 +141,7 @@ const CreateWeekAndMatchesForm: React.FC = () => {
           };
 
           // Mapear assistências
-          const mapAssists = (assists: any[]) => {
+          const mapAssists = (assists: { assists: number; playerId: string }[]) => {
             return assists
               .filter(assist => assist.assists !== undefined && assist.assists !== null && assist.assists !== 0 && assist.playerId !== undefined)
               .map(assist => ({

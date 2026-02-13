@@ -1,5 +1,5 @@
 
-import { SingleValue } from 'react-select';
+import { OptionProps, SingleValue } from 'react-select';
 import Flag from 'react-world-flags';
 import countryOptions from '../../utils/countryOptions';
 import SelectWithSearch from '../SelectWithSearch';
@@ -25,8 +25,7 @@ const customSingleValue = ({ data }: { data: CountryOption }) => (
   </div>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const customOption = (props: any) => {
+const customOption = (props: OptionProps<CountryOption>) => {
   const { data, innerRef, innerProps } = props;
   return (
     <div ref={innerRef} {...innerProps} style={{ display: 'flex', alignItems: 'center' }}>

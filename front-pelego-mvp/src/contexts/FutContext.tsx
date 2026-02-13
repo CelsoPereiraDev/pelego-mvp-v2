@@ -20,6 +20,7 @@ interface FutContextType {
   userRole: 'admin' | 'user' | 'viewer' | null;
   futs: FutData[];
   loading: boolean;
+  error: boolean;
   switchFut: (futId: string) => void;
   createFut: (name: string, description?: string) => Promise<FutData>;
   refreshFuts: () => Promise<void>;
@@ -36,6 +37,7 @@ export function FutProvider({ children }: { children: ReactNode }) {
   const [futName, setFutName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'user' | 'viewer' | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const loadFuts = useCallback(async () => {
     if (!user) {
@@ -44,8 +46,11 @@ export function FutProvider({ children }: { children: ReactNode }) {
       setFutName(null);
       setUserRole(null);
       setLoading(false);
+      setError(false);
       return;
     }
+
+    setError(false);
 
     try {
       const futsData = await new QueryRequest<FutData[]>().get('futs');
@@ -82,9 +87,10 @@ export function FutProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(STORAGE_KEY, selectedFut.id);
         }
       }
-    } catch (error) {
-      console.error('Error loading futs:', error);
+    } catch (err) {
+      console.error('Error loading futs:', err);
       setFuts([]);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -142,6 +148,7 @@ export function FutProvider({ children }: { children: ReactNode }) {
       userRole,
       futs,
       loading,
+      error,
       switchFut,
       createFut: createFutFn,
       refreshFuts,

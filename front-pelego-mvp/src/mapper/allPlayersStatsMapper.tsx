@@ -1,3 +1,4 @@
+import { MatchResponse } from "@/types/match";
 import { PlayerResponse } from "@/types/player";
 import { WeekResponse } from "@/types/weeks";
 
@@ -196,7 +197,7 @@ const calculateRankings = (playerStatsMap: PlayerStatsMap, numberOfWeeks: number
 
 
 const processGoalsAndAssists = (
-  match: any,
+  match: MatchResponse,
   playerStatsMap: PlayerStatsMap
 ) => {
   match.goals?.forEach(goal => {
@@ -284,7 +285,7 @@ const calculatePlayersStats = (weeks: WeekResponse[]): PlayerStatsMap => {
 
         processGoalsAndAssists(match, playerStatsMap);
       }
-    });calculateAverageStats
+    });
   });
 
   calculateAverageStats(playerStatsMap);

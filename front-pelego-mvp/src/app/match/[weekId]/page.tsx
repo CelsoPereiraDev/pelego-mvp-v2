@@ -17,6 +17,7 @@ import { useWeek } from '@/services/weeks/useWeek';
 import { Player } from '@/types/player';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { useToast } from '@/hooks/use-toast';
 import { Save } from '@mui/icons-material';
 
 import { CalendarDays, ClipboardList, Users } from 'lucide-react';
@@ -65,6 +66,7 @@ const getAvailablePlayers = (allPlayers: Player[], selectedPlayers: string[]) =>
 };
 
 const CreateWeekAndMatchesForm: React.FC = () => {
+  const { toast } = useToast();
   const params = useParams();
   const paramWeekId = params.weekId;
 
@@ -84,11 +86,6 @@ const CreateWeekAndMatchesForm: React.FC = () => {
     resolver: zodResolver(CreateMatchSchema),
     defaultValues,
   });
-  console.log("🆑 ~ CreateWeekAndMatchesForm ~ errors:", errors)
-  console.log("🔴 ~ Form values on render:", JSON.stringify(getValues(), null, 2))
-
-  console.log("🆑 ~ CreateWeekAndMatchesForm ~ defaultValues:", defaultValues)
-
   useEffect(() => {
   if (week) {
     const mappedValues = mapWeekToFormValues(week);
@@ -99,7 +96,7 @@ const CreateWeekAndMatchesForm: React.FC = () => {
     
 
   const [createdTeams, setCreatedTeams] = useState<{
-    players: any; id: string 
+    players: { id: string }[]; id: string
   }[]>([]);
   const [weekId, setWeekId] = useState<string | null>(null);
 
@@ -109,7 +106,6 @@ const CreateWeekAndMatchesForm: React.FC = () => {
     control,
     name: 'teams'
   });
-  console.log("🆑 ~ CreateWeekAndMatchesForm ~ teamFields:", teamFields)
   const { fields: matchFields, append: appendMatch, remove: removeMatch } = useFieldArray({
     control,
     name: 'matches'
@@ -135,15 +131,13 @@ const CreateWeekAndMatchesForm: React.FC = () => {
       setCreatedTeams(result.createdTeams);
       setWeekId(result.week.id);
 
-      alert('Times criados com sucesso! Agora você pode criar as partidas.');
+      toast({ title: 'Times criados com sucesso!', description: 'Agora voce pode criar as partidas.' });
     } catch (error) {
-      console.error('Erro ao criar os times:', error);
-      alert('Falha ao criar os times');
+      toast({ variant: 'destructive', title: 'Erro ao criar os times', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 
   const handleCreateMatches: SubmitHandler<CreateMatch> = async data => {
-    console.log("🚀 Submit data:", JSON.stringify(data, null, 2));
     try {
       if (!weekId) {
         throw new Error("Week ID must be set before creating matches.");
@@ -200,10 +194,9 @@ const CreateWeekAndMatchesForm: React.FC = () => {
 
       await update(updatedTeams);
 
-      alert('Partidas criadas com sucesso! Campeões da semana foram definidos.');
+      toast({ title: 'Partidas criadas!', description: 'Campeoes da semana foram definidos.' });
     } catch (error) {
-      console.error('Erro ao criar as partidas:', error);
-      alert('Falha ao criar as partidas');
+      toast({ variant: 'destructive', title: 'Erro ao criar as partidas', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 
@@ -284,11 +277,7 @@ const CreateWeekAndMatchesForm: React.FC = () => {
           </div>
         </form>
 
-        <form onSubmit={(e) => {
-          console.log("🔴 FORM VALUES BEFORE SUBMIT:", JSON.stringify(getValues(), null, 2));
-          console.log("🔴 Match 7 specifically:", getValues().matches?.[7]);
-          handleSubmit(handleCreateMatches)(e);
-        }} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(handleCreateMatches)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 mt-8">
             {matchFields.map((match, index) => (
               <MatchForm

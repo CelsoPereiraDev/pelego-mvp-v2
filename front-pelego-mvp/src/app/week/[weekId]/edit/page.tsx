@@ -46,7 +46,6 @@ export default function EditWeekPage() {
     watch,
     setValue,
     reset,
-    getValues,
     formState: { errors },
   } = form;
 
@@ -57,13 +56,6 @@ export default function EditWeekPage() {
       reset(formValues);
     }
   }, [week, players, reset]);
-
-  // Debug: Log errors
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      console.log('Form validation errors:', JSON.stringify(errors, null, 2));
-    }
-  }, [errors]);
 
   const {
     fields: teamFields,
@@ -119,8 +111,6 @@ export default function EditWeekPage() {
 
   const onSubmit = async (data: CreateMatchForm) => {
     try {
-      console.log('Form data before mapping:', JSON.stringify(data, null, 2));
-
       const mappedData = {
         date: new Date(data.date).toISOString(),
         teams: data.teams.map((team) => team.players),
@@ -163,11 +153,7 @@ export default function EditWeekPage() {
         }),
       };
 
-      console.log('Mapped data to send:', JSON.stringify(mappedData, null, 2));
-
       const result = await updateWeekWithMatches(weekId, mappedData);
-
-      console.log('Result from API:', result);
 
       toast({
         title: 'Sucesso!',
@@ -209,12 +195,7 @@ export default function EditWeekPage() {
       </div>
     }>
     <div className="container mx-auto py-8 px-4">
-      <form onSubmit={(e) => {
-          const values = getValues();
-          console.log("🔴 FORM VALUES BEFORE VALIDATION:", JSON.stringify(values, null, 2));
-          console.log("🔴 Match 7 specifically:", values.matches?.[7]);
-          handleSubmit(onSubmit)(e);
-        }}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>

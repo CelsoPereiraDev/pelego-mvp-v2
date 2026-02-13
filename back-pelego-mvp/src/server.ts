@@ -5,14 +5,18 @@ import { authMiddleware } from './middleware/auth';
 import { futRoutes } from './routes/futs/futs';
 import { scopedRoutes } from './routes/futs/scoped-routes';
 
-const app = fastify();
+const app = fastify({ logger: true });
 
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 // CORS
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:3000'];
+
 app.register(cors, {
-  origin: '*',
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 });
 

@@ -48,8 +48,8 @@ export default function InviteAcceptPage() {
       await refreshFuts();
       switchFut(result.futId);
       setTimeout(() => router.push('/'), 1500);
-    } catch (err: any) {
-      const message = err?.message || 'Erro ao aceitar convite';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao aceitar convite';
       if (message.includes('já é membro')) {
         setError('Você já é membro deste Fut.');
       } else if (message.includes('expirado')) {

@@ -172,7 +172,7 @@ export const GoalEntry = ({
                 id={`match-${matchIndex}-${side}-goal-${goalIndex}-player`}
                 options={playerOptions}
                 value={playerOptions.find((opt) => opt.value === field.value) || null}
-                onChange={(opt: any) => field.onChange(opt?.value || '')}
+                onChange={(opt: { value: string } | null) => field.onChange(opt?.value || '')}
                 placeholder="Selecionar..."
               />
             )}
@@ -194,7 +194,7 @@ export const GoalEntry = ({
                 id={`match-${matchIndex}-${side}-goal-${goalIndex}-count`}
                 options={goalCountOptions}
                 value={goalCountOptions.find((opt) => opt.value === field.value) || null}
-                onChange={(opt: any) => field.onChange(opt?.value ?? 0)}
+                onChange={(opt: { value: number } | null) => field.onChange(opt?.value ?? 0)}
                 placeholder="0"
                 isDisabled={goalCountOptions.length === 1}
               />
@@ -219,7 +219,7 @@ export const GoalEntry = ({
               <SelectWithSearch
                 options={ownGoalPlayerOptions}
                 value={ownGoalPlayerOptions.find((opt) => opt.value === field.value) || null}
-                onChange={(opt: any) => field.onChange(opt?.value || '')}
+                onChange={(opt: { value: string } | null) => field.onChange(opt?.value || '')}
                 placeholder="Quem fez o gol contra?"
               />
             )}
@@ -288,9 +288,8 @@ const AssistEntry = ({
           <SelectWithSearch
             options={assistOptions}
             value={assistOptions.find((opt) => opt.value === field.value) || null}
-            onChange={(opt: any) => {
+            onChange={(opt: { value: string } | null) => {
               field.onChange(opt?.value || '');
-              // Auto-set assists count to 1 when player selected, 0 when cleared
               setValue(
                 `matches.${matchIndex}.${side}Assists.${goalIndex}.assists`,
                 opt?.value ? 1 : 0

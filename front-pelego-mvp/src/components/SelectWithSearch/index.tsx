@@ -1,7 +1,7 @@
-import Select from "react-select";
+import Select, { GroupBase, Props, StylesConfig } from "react-select";
 
-const customStyles = {
-  control: (provided: any, state: any) => ({
+const customStyles: StylesConfig = {
+  control: (provided, state) => ({
     ...provided,
     backgroundColor: "hsl(224, 71%, 4%)",
     borderColor: state.isFocused ? "hsl(var(--ring))" : "hsl(var(--border))",
@@ -11,50 +11,43 @@ const customStyles = {
       borderColor: "hsl(var(--input))",
     },
   }),
-  option: (provided: any, state: any) => ({
+  option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isFocused
-      ? "hsl(var(--light-hover))" 
+      ? "hsl(var(--light-hover))"
       : "hsl(var(--background))",
     color: "hsl(var(--foreground))",
     "&:hover": {
       backgroundColor: "hsl(var(--light-hover))",
     },
   }),
-  singleValue: (provided: any) => ({
+  singleValue: (provided) => ({
     ...provided,
     color: "hsl(var(--text-light-gray))",
   }),
-  menu: (provided: any) => ({
+  menu: (provided) => ({
     ...provided,
     backgroundColor: "hsl(var(--background))",
   }),
-  placeholder: (provided: any) => ({
+  placeholder: (provided) => ({
     ...provided,
     color: "hsl(var(--placeholder))",
   }),
-  // dropdownIndicator: (provided: any, state: any) => ({
-  //   ...provided,
-  //   color: state.isFocused ? "hsl(var(--ring))" : "hsl(var(--border))",
-  //   "&:hover": {
-  //     color: "hsl(var(--ring))",
-  //   },
-  // }),
-  indicatorSeparator: (provided: any) => ({
+  indicatorSeparator: (provided) => ({
     ...provided,
     backgroundColor: "hsl(var(--border))",
   }),
-  multiValue: (provided: any) => ({
+  multiValue: (provided) => ({
     ...provided,
     backgroundColor: "#1F2937",
     color: "hsl(var(--text-light-gray))"
   }),
-  multiValueLabel: (provided: any) => ({
+  multiValueLabel: (provided) => ({
     ...provided,
     color: "hsl(var(--text-light-gray))",
     padding: "5px 3px 3px 6px"
   }),
-  multiValueRemove: (provided: any) => ({
+  multiValueRemove: (provided) => ({
     ...provided,
     color: "hsl(var(--text-light-gray))",
     "&:hover": {
@@ -64,6 +57,10 @@ const customStyles = {
   }),
 };
 
-export default function SelectWithSearch(props: any) {
-  return <Select styles={customStyles} {...props} />;
+export default function SelectWithSearch<
+  Option = unknown,
+  IsMulti extends boolean = false,
+  Group extends GroupBase<Option> = GroupBase<Option>
+>(props: Props<Option, IsMulti, Group>) {
+  return <Select<Option, IsMulti, Group> styles={customStyles as StylesConfig<Option, IsMulti, Group>} {...props} />;
 }

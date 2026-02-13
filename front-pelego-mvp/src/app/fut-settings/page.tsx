@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useFut } from '@/contexts/FutContext';
 import { usePlayers } from '@/services/player/usePlayers';
+import { useToast } from '@/hooks/use-toast';
 import { MemberData } from '@/types/member';
 import { InviteData } from '@/types/invite';
 import { PlayerResponse } from '@/types/player';
@@ -58,6 +59,7 @@ export default function FutSettingsPage() {
 function FutSettingsContent() {
   const { futId, futName, refreshFuts } = useFut();
   const { players } = usePlayers();
+  const { toast } = useToast();
 
   const [members, setMembers] = useState<MemberData[]>([]);
   const [invites, setInvites] = useState<InviteData[]>([]);
@@ -97,7 +99,7 @@ function FutSettingsContent() {
       const data = await getMembers(futId);
       setMembers(data);
     } catch (error) {
-      console.error('Erro ao carregar membros:', error);
+      toast({ variant: 'destructive', title: 'Erro ao carregar membros', description: error instanceof Error ? error.message : 'Tente novamente' });
     } finally {
       setLoadingMembers(false);
     }
@@ -109,7 +111,7 @@ function FutSettingsContent() {
       const data = await getInvites(futId);
       setInvites(data);
     } catch (error) {
-      console.error('Erro ao carregar convites:', error);
+      toast({ variant: 'destructive', title: 'Erro ao carregar convites', description: error instanceof Error ? error.message : 'Tente novamente' });
     } finally {
       setLoadingInvites(false);
     }
@@ -136,7 +138,7 @@ function FutSettingsContent() {
       await refreshFuts();
       setEditingFut(false);
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      toast({ variant: 'destructive', title: 'Erro ao salvar', description: error instanceof Error ? error.message : 'Tente novamente' });
     } finally {
       setSavingFut(false);
     }
@@ -150,7 +152,7 @@ function FutSettingsContent() {
       await updateMemberRole(futId, userId, newRole);
       await loadMembers();
     } catch (error) {
-      console.error('Erro ao alterar role:', error);
+      toast({ variant: 'destructive', title: 'Erro ao alterar role', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 
@@ -163,7 +165,7 @@ function FutSettingsContent() {
       setDeleteTargetMember(null);
       await loadMembers();
     } catch (error) {
-      console.error('Erro ao remover membro:', error);
+      toast({ variant: 'destructive', title: 'Erro ao remover membro', description: error instanceof Error ? error.message : 'Tente novamente' });
     } finally {
       setDeleting(false);
     }
@@ -178,7 +180,7 @@ function FutSettingsContent() {
       setSelectedPlayerId('');
       await loadMembers();
     } catch (error) {
-      console.error('Erro ao vincular jogador:', error);
+      toast({ variant: 'destructive', title: 'Erro ao vincular jogador', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 
@@ -202,7 +204,7 @@ function FutSettingsContent() {
       setGeneratedLink(link);
       await loadInvites();
     } catch (error) {
-      console.error('Erro ao criar convite:', error);
+      toast({ variant: 'destructive', title: 'Erro ao criar convite', description: error instanceof Error ? error.message : 'Tente novamente' });
     } finally {
       setCreatingInvite(false);
     }
@@ -214,7 +216,7 @@ function FutSettingsContent() {
       await revokeInvite(futId, token);
       await loadInvites();
     } catch (error) {
-      console.error('Erro ao revogar convite:', error);
+      toast({ variant: 'destructive', title: 'Erro ao revogar convite', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 

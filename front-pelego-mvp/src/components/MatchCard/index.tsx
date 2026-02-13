@@ -236,7 +236,7 @@ export const MatchCard = ({
                   id={`match-${matchIndex}-home-team`}
                   options={homeTeamOptions}
                   value={homeTeamOptions.find((opt) => opt.value === field.value) || null}
-                  onChange={(opt: any) => field.onChange(opt?.value || '')}
+                  onChange={(opt: { value: string } | null) => field.onChange(opt?.value || '')}
                   placeholder="Selecionar time..."
                 />
               )}
@@ -253,7 +253,7 @@ export const MatchCard = ({
                   id={`match-${matchIndex}-away-team`}
                   options={awayTeamOptions}
                   value={awayTeamOptions.find((opt) => opt.value === field.value) || null}
-                  onChange={(opt: any) => field.onChange(opt?.value || '')}
+                  onChange={(opt: { value: string } | null) => field.onChange(opt?.value || '')}
                   placeholder="Selecionar time..."
                 />
               )}
@@ -287,7 +287,7 @@ export const MatchCard = ({
                       id={`match-${matchIndex}-home-score`}
                       options={scoreOptions}
                       value={scoreOptions.find((opt) => opt.value === field.value) || null}
-                      onChange={(opt: any) => {
+                      onChange={(opt: { value: string } | null) => {
                         field.onChange(opt?.value || '0');
                         // Auto-open details panel when score > 0
                         if (opt && parseInt(opt.value) > 0) {
@@ -312,7 +312,7 @@ export const MatchCard = ({
                       id={`match-${matchIndex}-away-score`}
                       options={scoreOptions}
                       value={scoreOptions.find((opt) => opt.value === field.value) || null}
-                      onChange={(opt: any) => {
+                      onChange={(opt: { value: string } | null) => {
                         field.onChange(opt?.value || '0');
                         // Auto-open details panel when score > 0
                         if (opt && parseInt(opt.value) > 0) {

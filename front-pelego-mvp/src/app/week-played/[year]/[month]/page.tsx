@@ -130,7 +130,7 @@ const PlayerWeeksTogetherPage: React.FC = () => {
     .map(pair => pair!);
 
   // Função para ordenar os dados
-  const sortData = (data: any[], config: TableSortConfig | null) => {
+  const sortData = <T extends Record<string, unknown>>(data: T[], config: TableSortConfig | null): T[] => {
     if (config) {
       return [...data].sort((a, b) => {
         if (a[config.key] < b[config.key]) {

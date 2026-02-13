@@ -1,11 +1,13 @@
 'use client';
 
 import { useFut } from '@/contexts/FutContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 
 export default function FutOnboarding() {
   const { createFut } = useFut();
+  const { signOut } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -85,6 +87,13 @@ export default function FutOnboarding() {
             {isCreating ? 'Criando...' : 'Criar Fut'}
           </button>
         </form>
+
+        <button
+          onClick={signOut}
+          className="w-full mt-4 rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+        >
+          Sair
+        </button>
       </div>
     </div>
   );

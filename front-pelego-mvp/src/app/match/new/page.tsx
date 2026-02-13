@@ -15,7 +15,7 @@ import { CreateMatchForm } from '@/types/forms';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarIcon, Loader2, Plus, Save, Trophy, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 export default function NewMatchPageV2() {
@@ -49,14 +49,6 @@ export default function NewMatchPageV2() {
     setValue,
     formState: { errors },
   } = form;
-    console.log("🆑 ~ NewMatchPageV2 ~ watch:", watch())
-
-  // Debug: Log errors whenever they change
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      console.log('Form validation errors:', JSON.stringify(errors, null, 2));
-    }
-  }, [errors]);
 
   const {
     fields: teamFields,
@@ -122,8 +114,6 @@ export default function NewMatchPageV2() {
 
   const onSubmit = async (data: CreateMatchForm) => {
     try {
-      console.log('Form data before mapping:', JSON.stringify(data, null, 2));
-
       // Map form data to backend format
       const mappedData = {
         date: new Date(data.date).toISOString(),
@@ -170,11 +160,7 @@ export default function NewMatchPageV2() {
         }),
       };
 
-      console.log('Mapped data to send:', JSON.stringify(mappedData, null, 2));
-
       const result = await createWeekWithMatches(mappedData);
-
-      console.log('Result from API:', result);
 
       toast({
         title: 'Sucesso!',
@@ -185,12 +171,6 @@ export default function NewMatchPageV2() {
       // Redirect to home or week details
       router.push('/');
     } catch (error) {
-      console.error('Error creating week:', error);
-      console.error('Error details:', {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-      });
       toast({
         title: 'Erro ao criar semana',
         description: error instanceof Error ? error.message : 'Erro desconhecido',

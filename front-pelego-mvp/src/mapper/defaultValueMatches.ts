@@ -32,8 +32,8 @@ export const mapWeekToFormValues = (week: WeekResponse, players: PlayerResponse[
         mappedMatchIds.add(match.id);
 
         // Separar gols por time
-        const homeGoalsForForm: any[] = [];
-        const awayGoalsForForm: any[] = [];
+        const homeGoalsForForm: { goals: number; playerId: string; ownGoalPlayerId: string }[] = [];
+        const awayGoalsForForm: { goals: number; playerId: string; ownGoalPlayerId: string }[] = [];
 
         match.goals.forEach(goal => {
           // Gol contra (ownGoal)
@@ -79,8 +79,8 @@ export const mapWeekToFormValues = (week: WeekResponse, players: PlayerResponse[
         });
 
         // Separar assistências por time
-        const homeAssists: any[] = [];
-        const awayAssists: any[] = [];
+        const homeAssists: { assists: number; playerId: string }[] = [];
+        const awayAssists: { assists: number; playerId: string }[] = [];
 
         match.assists.forEach(assist => {
           const assistPlayerTeam = playerToTeamMap[assist.playerId];
@@ -123,7 +123,6 @@ export const mapWeekToFormValues = (week: WeekResponse, players: PlayerResponse[
           homeAssists,
           awayAssists,
         };
-        console.log("🔍 Match mapped:", { matchId: match.id, homeAssists, awayAssists, homeGoalsForForm, awayGoalsForForm });
         return result;
       }).filter(match => match !== null) || [],
   };

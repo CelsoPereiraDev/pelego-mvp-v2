@@ -16,6 +16,7 @@ import { Player, PlayerGetOverallFormData } from "@/types/player";
 import { calculateOverall } from "@/utils/calculateOverall";
 import countryOptions from "@/utils/countryOptions";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import { useState } from "react";
@@ -25,6 +26,7 @@ import { SingleValue } from "react-select";
 
 export default function AddPlayersPage() {
   const { futId } = useFut();
+  const { toast } = useToast();
   const {
     control,
     watch,
@@ -60,10 +62,10 @@ export default function AddPlayersPage() {
     const playerData = addPlayerMapper(formData);
 
     try {
-      const createdPlayer = await createPlayer(futId, playerData);
-      console.log("Jogador criado com sucesso:", createdPlayer);
+      await createPlayer(futId, playerData);
+      toast({ title: 'Jogador criado com sucesso!' });
     } catch (error) {
-      console.error("Erro ao criar jogador:", error);
+      toast({ variant: 'destructive', title: 'Erro ao criar jogador', description: error instanceof Error ? error.message : 'Tente novamente' });
     }
   };
 

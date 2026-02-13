@@ -1,6 +1,7 @@
 'use client';
 
 import { AssistCard, DefenderCard, MonthChampionCard, MostPointerCard, NormalPlayerCard, StrikerCard, TeamOfTheMonthCard } from '@/components/PlayerCardSmall';
+import { Player } from '@/types/player';
 import SelectWithSearch from '@/components/SelectWithSearch';
 import { usePlayers } from '@/services/player/usePlayers';
 import { useWeeksByDate } from '@/services/weeks/useWeeksByDate';
@@ -37,7 +38,7 @@ const getCategoryLabel = (count: number, categoryKey: string) => {
   }
 };
 
-const getBadge = (categoryKey: string, playerData: any) => {
+const getBadge = (categoryKey: string, playerData: Player) => {
   switch (categoryKey) {
     case 'Paulo Baier':
       return <StrikerCard playerData={playerData} showOverall={true} />;

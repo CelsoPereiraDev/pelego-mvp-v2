@@ -33,3 +33,5 @@ prisma/stage.db
 prisma/dev.db-journal
 prisma/stage.db-journal
 prisma/migrations/
+
+scripts/dev.db
