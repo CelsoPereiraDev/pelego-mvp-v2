@@ -15,8 +15,11 @@ import { usePlayers } from '@/services/player/usePlayers';
 import { useWeeksByDate } from '@/services/weeks/useWeeksByDate';
 import { calculateBestOfEachPosition, CalculateBestOfEachPositionProps } from '@/utils/calculateBestOfPositions';
 import { calculateMonthResume, MonthResumeProps } from '@/utils/calculateMonthResume';
+import { useFut } from '@/contexts/FutContext';
+import { useToast } from '@/hooks/use-toast';
+import { finalizeYear as finalizeYearApi, isYearFinalized } from '@/services/stats/resources';
 import { useParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface FilteredPlayer extends Player {
   category: string;
@@ -95,8 +98,10 @@ const getCategoryLabelInPortuguese = (category: string) => {
   }
 };
 
-const MonthResume: React.FC = () => {
+const YearResume: React.FC = () => {
   const { year } = useParams();
+  const { futId } = useFut();
+  const { toast } = useToast();
   const { weeks, isLoading, isError } = useWeeksByDate(year as string);
 
   const { players } = usePlayers();
@@ -104,8 +109,19 @@ const MonthResume: React.FC = () => {
   const [selectedPlayers, setSelectedPlayers] = useState<Record<string, string>>({});
   const [bestOfEachPosition, setBestOfEachPosition] = useState<CalculateBestOfEachPositionProps | null>(null);
   const [filteredPlayers, setFilteredPlayers] = useState<FilteredPlayer[]>([]);
-  const [teamOfTheMonth, setTeamOfTheMonth] = useState<FilteredPlayer[]>([]); // Armazena a "Seleção do Mês"
+  const [teamOfTheMonth, setTeamOfTheMonth] = useState<FilteredPlayer[]>([]);
   const [isButtonClicked, setIsButtonClicked] = useState(false);
+  const [isFinalized, setIsFinalized] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  // Verificar se o ano já foi finalizado
+  useEffect(() => {
+    if (futId && year) {
+      isYearFinalized(futId, year as string)
+        .then(({ finalized }) => setIsFinalized(finalized))
+        .catch(() => {});
+    }
+  }, [futId, year]);
 
   useEffect(() => {
     if (weeks && !isLoading && !isError) {
@@ -149,9 +165,56 @@ const MonthResume: React.FC = () => {
     setSelectedPlayers(updatedPlayers);
   };
 
+  const handleFinalizeYear = useCallback(async () => {
+    if (!futId || isFinalized || isFinalizing) return;
+
+    const confirmed = window.confirm(
+      'Tem certeza que deseja finalizar este ano? Esta ação é irreversível.',
+    );
+    if (!confirmed) return;
+
+    setIsFinalizing(true);
+
+    const findPlayerId = (playerName: string) =>
+      players.find((p) => p.name === playerName)?.id || '';
+
+    const awards = {
+      mvp: { playerId: findPlayerId(selectedPlayers.mvp), playerName: selectedPlayers.mvp },
+      topPointer: { playerId: findPlayerId(selectedPlayers.topPointer), playerName: selectedPlayers.topPointer },
+      scorer: { playerId: findPlayerId(selectedPlayers.scorer), playerName: selectedPlayers.scorer },
+      assists: { playerId: findPlayerId(selectedPlayers.assists), playerName: selectedPlayers.assists },
+      bestDefender: { playerId: findPlayerId(selectedPlayers.bestDefender), playerName: selectedPlayers.bestDefender },
+      lvp: { playerId: findPlayerId(selectedPlayers.lvp), playerName: selectedPlayers.lvp },
+    };
+
+    const teamOfTheYearPayload = {
+      atackers: [selectedPlayers.atackers, selectedPlayers.atackers_second].filter(Boolean),
+      midfielders: [selectedPlayers.midfielders, selectedPlayers.midfielders_second].filter(Boolean),
+      defenders: [selectedPlayers.defenders, selectedPlayers.defenders_second].filter(Boolean),
+      goalkeepers: [] as string[],
+    };
+
+    try {
+      await finalizeYearApi(futId, year as string, {
+        awards,
+        teamOfTheYear: teamOfTheYearPayload,
+      });
+      setIsFinalized(true);
+      toast({ title: 'Ano finalizado com sucesso!' });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao finalizar ano',
+        description: error instanceof Error ? error.message : 'Tente novamente',
+      });
+    } finally {
+      setIsFinalizing(false);
+    }
+  }, [futId, year, selectedPlayers, players, isFinalized, isFinalizing, toast]);
+
   const handleFilterPlayers = () => {
     const filtered: FilteredPlayer[] = [];
-    const teamOfTheMonthLocal: FilteredPlayer[] = []; // Lista para jogadores de Atackers, Midfielders, Defenders
+    const teamOfTheMonthLocal: FilteredPlayer[] = [];
 
     // Para cada categoria, pegar os jogadores selecionados daquela categoria específica
     categories.forEach((category) => {
@@ -209,6 +272,7 @@ const MonthResume: React.FC = () => {
         <h2 className="text-xl font-bold">{category.title}</h2>
         <SelectWithSearch
           isMulti={false}
+          isDisabled={isFinalized}
           options={data.map((player) => ({ label: player.name, value: player.name }))}
           value={{
             label: selectedPlayers[category.key] || defaultPlayer,
@@ -230,6 +294,7 @@ const MonthResume: React.FC = () => {
         <h2 className="text-xl font-bold">{positionTitle}</h2>
         <SelectWithSearch
           isMulti={false}
+          isDisabled={isFinalized}
           options={sortedPlayers.map((player) => ({ label: player.name, value: player.name }))}
           value={{
             label: selectedPlayers[positionKey] || defaultFirstPlayer,
@@ -239,6 +304,7 @@ const MonthResume: React.FC = () => {
         />
         <SelectWithSearch
           isMulti={false}
+          isDisabled={isFinalized}
           options={sortedPlayers.map((player) => ({ label: player.name, value: player.name }))}
           value={{
             label: selectedPlayers[`${positionKey}_second`] || defaultSecondPlayer,
@@ -262,11 +328,27 @@ const MonthResume: React.FC = () => {
         {renderPositionSelects('defenders', 'Defensores', bestOfEachPosition.defenders)}
       </div>
 
-      <button className="mt-4 p-2 bg-blue-500 text-white rounded" onClick={handleFilterPlayers}>
-        Filtrar Jogadores Selecionados
-      </button>
+      <div className="flex gap-4 mt-4">
+        <button className="p-2 bg-blue-500 text-white rounded" onClick={handleFilterPlayers} disabled={isFinalized}>
+          Filtrar Jogadores Selecionados
+        </button>
 
-      <h2 className="text-3xl font-bold my-8">Recompensas do mês</h2>
+        <button
+          className="p-2 bg-green-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleFinalizeYear}
+          disabled={isFinalized || isFinalizing}
+        >
+          {isFinalizing ? 'Finalizando...' : isFinalized ? 'Ano Finalizado' : 'Finalizar Ano'}
+        </button>
+      </div>
+
+      {isFinalized && (
+        <div className="mt-4 p-3 bg-green-100 text-green-800 rounded border border-green-300">
+          Este ano já foi finalizado. As premiações não podem mais ser alteradas.
+        </div>
+      )}
+
+      <h2 className="text-3xl font-bold my-8">Recompensas do ano</h2>
       {isButtonClicked && filteredPlayers.length > 0 && (
         <div className="">
           <h2 className="text-2xl font-bold my-6">Recompensas individuais</h2>
@@ -309,4 +391,4 @@ const MonthResume: React.FC = () => {
   );
 };
 
-export default MonthResume;
+export default YearResume;

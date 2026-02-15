@@ -243,6 +243,7 @@ export interface InviteData {
   maxUses: number | null;
   usedCount: number;
   active: boolean;
+  playerId?: string;
 }
 
 export async function createInvite(
@@ -251,7 +252,8 @@ export async function createInvite(
   role: 'user' | 'viewer',
   createdBy: string,
   expiresAt?: Date,
-  maxUses?: number
+  maxUses?: number,
+  playerId?: string
 ): Promise<InviteData> {
   const token = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
   const now = new Date();
@@ -267,6 +269,7 @@ export async function createInvite(
     maxUses: maxUses ?? null,
     usedCount: 0,
     active: true,
+    ...(playerId ? { playerId } : {}),
   });
 
   return {
@@ -280,6 +283,7 @@ export async function createInvite(
     maxUses: maxUses ?? null,
     usedCount: 0,
     active: true,
+    ...(playerId ? { playerId } : {}),
   };
 }
 
@@ -302,6 +306,7 @@ export async function getInvitesByFut(futId: string): Promise<InviteData[]> {
       maxUses: data.maxUses ?? null,
       usedCount: data.usedCount || 0,
       active: data.active,
+      ...(data.playerId ? { playerId: data.playerId } : {}),
     };
   });
 }
@@ -321,6 +326,7 @@ export async function getInviteByToken(token: string): Promise<InviteData | null
     maxUses: data.maxUses ?? null,
     usedCount: data.usedCount || 0,
     active: data.active,
+    ...(data.playerId ? { playerId: data.playerId } : {}),
   };
 }
 
@@ -356,6 +362,11 @@ export async function acceptInvite(
 
   // Add user as member
   await addFutMember(data.futId, userId, data.role, email, displayName);
+
+  // Auto-link player if invite was created for a specific player
+  if (data.playerId) {
+    await linkPlayerToMember(data.futId, userId, data.playerId);
+  }
 
   // Increment usedCount
   await db.collection('invites').doc(token).update({
@@ -415,6 +426,7 @@ export interface PlayerData {
   monthBestOfPosition?: boolean;
   team?: string;
   linkedUserId?: string;
+  email?: string;
 }
 
 export async function getPlayers(futId: string): Promise<PlayerData[]> {
@@ -446,7 +458,7 @@ export async function getPlayerWithPrizes(futId: string, playerId: string) {
 
   // Get month prizes
   const monthPrizesSnap = await db.collection('futs').doc(futId)
-    .collection('monthPrizes').where('players', 'array-contains', playerId).get();
+    .collection('monthPrizes').where('playerId', '==', playerId).get();
 
   // Get year prizes
   const yearPrizesSnap = await db.collection('futs').doc(futId)
@@ -695,6 +707,338 @@ export async function getWeeksByDate(futId: string, year: string, month?: string
     if (week) weeks.push(week);
   }
   return weeks;
+}
+
+export async function getAvailableYears(futId: string): Promise<number[]> {
+  const snap = await db.collection('futs').doc(futId).collection('weeks').get();
+  const years = new Set<number>();
+  snap.docs.forEach((doc) => {
+    const data = doc.data();
+    const date = data.date instanceof Timestamp
+      ? data.date.toDate()
+      : new Date(data.date);
+    years.add(date.getFullYear());
+  });
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+// Lightweight: returns date (YYYY-MM-DD) → weekId map without loading subcollections
+// Lightweight: reads only a week doc's date (no subcollections)
+export async function getWeekDate(futId: string, weekId: string): Promise<string | null> {
+  const doc = await db.collection('futs').doc(futId).collection('weeks').doc(weekId).get();
+  if (!doc.exists) return null;
+  const data = doc.data()!;
+  const date = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
+  return date.toISOString().slice(0, 10);
+}
+
+export async function getWeekDateMap(futId: string): Promise<Map<string, string>> {
+  const snap = await db.collection('futs').doc(futId).collection('weeks').get();
+  const map = new Map<string, string>();
+  for (const doc of snap.docs) {
+    const data = doc.data();
+    const date = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
+    map.set(date.toISOString().slice(0, 10), doc.id);
+  }
+  return map;
+}
+
+// ============================================================
+// PLAYER STATS (pre-computed overview aggregation)
+// ============================================================
+
+import { calculateAllPlayerStats, buildTop5Lists, InternalPlayerStats, PlayerOverviewStats } from '../utils/stats/calculatePlayerOverview';
+import { calculateMonthResume } from '../utils/stats/calculateMonthResume';
+import { calculateBestOfEachPosition } from '../utils/stats/calculateBestOfPositions';
+
+export interface PlayerStatsDocument {
+  playerId: string;
+  playerName: string;
+  year: number;
+  updatedAt: Timestamp;
+  matches: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  points: number;
+  goals: number;
+  ownGoals: number;
+  assists: number;
+  goalsConceded: number;
+  teamGoals: number;
+  totalWeeks: number;
+  totalGoalsPerWeek: number;
+  totalAssistsPerWeek: number;
+  totalPointsPerWeek: number;
+  totalGoalsConcededPerWeek: number;
+  averageGoalsConceded: number;
+  averagePointsPerMatch: number;
+  pointsPercentage: number;
+  averagePointsPerWeek: number;
+  averageGoalsPerWeek: number;
+  averageAssistsPerWeek: number;
+  averageGoalsConcededPerWeek: number;
+  rankings: Record<string, number>;
+  pointsWithPlayers: Record<string, { points: number; matches: number }>;
+  pointsAgainstPlayers: Record<string, { points: number; matches: number }>;
+  worstPerformingTeammates: Record<string, { points: number; matches: number }>;
+}
+
+function internalStatsToDoc(
+  playerId: string,
+  ps: InternalPlayerStats,
+  year: number,
+): PlayerStatsDocument {
+  return {
+    playerId,
+    playerName: ps.name,
+    year,
+    updatedAt: Timestamp.now(),
+    matches: ps.matches,
+    wins: ps.wins,
+    losses: ps.losses,
+    draws: ps.draws,
+    points: ps.points,
+    goals: ps.goals,
+    ownGoals: ps.ownGoals,
+    assists: ps.assists,
+    goalsConceded: ps.goalsConceded,
+    teamGoals: ps.teamGoals,
+    totalWeeks: ps.totalWeeks.size,
+    totalGoalsPerWeek: ps.totalGoalsPerWeek,
+    totalAssistsPerWeek: ps.totalAssistsPerWeek,
+    totalPointsPerWeek: ps.totalPointsPerWeek,
+    totalGoalsConcededPerWeek: ps.totalGoalsConcededPerWeek,
+    averageGoalsConceded: ps.averageGoalsConceded,
+    averagePointsPerMatch: ps.averagePointsPerMatch,
+    pointsPercentage: ps.pointsPercentage,
+    averagePointsPerWeek: ps.averagePointsPerWeek,
+    averageGoalsPerWeek: ps.averageGoalsPerWeek,
+    averageAssistsPerWeek: ps.averageAssistsPerWeek,
+    averageGoalsConcededPerWeek: ps.averageGoalsConcededPerWeek,
+    rankings: ps.rankings as Record<string, number>,
+    pointsWithPlayers: ps.pointsWithPlayers,
+    pointsAgainstPlayers: ps.pointsAgainstPlayers,
+    worstPerformingTeammates: ps.worstPerformingTeammates,
+  };
+}
+
+export function docToOverviewStats(doc: PlayerStatsDocument): PlayerOverviewStats {
+  const top5 = buildTop5Lists({
+    ...doc,
+    totalWeeks: new Set<string>(), // not used by buildTop5Lists
+  } as unknown as InternalPlayerStats);
+
+  return {
+    matches: doc.matches,
+    wins: doc.wins,
+    losses: doc.losses,
+    draws: doc.draws,
+    points: doc.points,
+    goals: doc.goals,
+    ownGoals: doc.ownGoals,
+    assists: doc.assists,
+    goalsConceded: doc.goalsConceded,
+    teamGoals: doc.teamGoals,
+    averageGoalsConceded: doc.averageGoalsConceded,
+    averagePointsPerMatch: doc.averagePointsPerMatch,
+    pointsPercentage: doc.pointsPercentage,
+    averagePointsPerWeek: doc.averagePointsPerWeek,
+    averageGoalsPerWeek: doc.averageGoalsPerWeek,
+    averageAssistsPerWeek: doc.averageAssistsPerWeek,
+    averageGoalsConcededPerWeek: doc.averageGoalsConcededPerWeek,
+    totalWeeks: doc.totalWeeks,
+    rankings: doc.rankings,
+    ...top5,
+  };
+}
+
+export function mergePlayerStatsDocs(docs: PlayerStatsDocument[]): PlayerOverviewStats {
+  if (docs.length === 0) {
+    return docToOverviewStats({
+      playerId: '', playerName: '', year: 0, updatedAt: Timestamp.now(),
+      matches: 0, wins: 0, losses: 0, draws: 0, points: 0,
+      goals: 0, ownGoals: 0, assists: 0, goalsConceded: 0, teamGoals: 0,
+      totalWeeks: 0, totalGoalsPerWeek: 0, totalAssistsPerWeek: 0,
+      totalPointsPerWeek: 0, totalGoalsConcededPerWeek: 0,
+      averageGoalsConceded: 0, averagePointsPerMatch: 0, pointsPercentage: 0,
+      averagePointsPerWeek: 0, averageGoalsPerWeek: 0,
+      averageAssistsPerWeek: 0, averageGoalsConcededPerWeek: 0,
+      rankings: {}, pointsWithPlayers: {}, pointsAgainstPlayers: {},
+      worstPerformingTeammates: {},
+    });
+  }
+  if (docs.length === 1) return docToOverviewStats(docs[0]);
+
+  // Sum raw counters
+  let matches = 0, wins = 0, losses = 0, draws = 0, points = 0;
+  let goals = 0, ownGoals = 0, assists = 0, goalsConceded = 0, teamGoals = 0;
+  let totalWeeks = 0;
+  let totalGoalsPerWeek = 0, totalAssistsPerWeek = 0;
+  let totalPointsPerWeek = 0, totalGoalsConcededPerWeek = 0;
+  const mergedWith: Record<string, { points: number; matches: number }> = {};
+  const mergedAgainst: Record<string, { points: number; matches: number }> = {};
+  const mergedWorst: Record<string, { points: number; matches: number }> = {};
+
+  for (const doc of docs) {
+    matches += doc.matches;
+    wins += doc.wins;
+    losses += doc.losses;
+    draws += doc.draws;
+    points += doc.points;
+    goals += doc.goals;
+    ownGoals += doc.ownGoals;
+    assists += doc.assists;
+    goalsConceded += doc.goalsConceded;
+    teamGoals += doc.teamGoals;
+    totalWeeks += doc.totalWeeks;
+    totalGoalsPerWeek += doc.totalGoalsPerWeek;
+    totalAssistsPerWeek += doc.totalAssistsPerWeek;
+    totalPointsPerWeek += doc.totalPointsPerWeek;
+    totalGoalsConcededPerWeek += doc.totalGoalsConcededPerWeek;
+
+    for (const [name, data] of Object.entries(doc.pointsWithPlayers)) {
+      if (!mergedWith[name]) mergedWith[name] = { points: 0, matches: 0 };
+      mergedWith[name].points += data.points;
+      mergedWith[name].matches += data.matches;
+    }
+    for (const [name, data] of Object.entries(doc.pointsAgainstPlayers)) {
+      if (!mergedAgainst[name]) mergedAgainst[name] = { points: 0, matches: 0 };
+      mergedAgainst[name].points += data.points;
+      mergedAgainst[name].matches += data.matches;
+    }
+    for (const [name, data] of Object.entries(doc.worstPerformingTeammates)) {
+      if (!mergedWorst[name]) mergedWorst[name] = { points: 0, matches: 0 };
+      mergedWorst[name].points += data.points;
+      mergedWorst[name].matches += data.matches;
+    }
+  }
+
+  // Recompute averages from summed counters
+  const merged: PlayerStatsDocument = {
+    playerId: docs[0].playerId,
+    playerName: docs[0].playerName,
+    year: 0,
+    updatedAt: Timestamp.now(),
+    matches, wins, losses, draws, points,
+    goals, ownGoals, assists, goalsConceded, teamGoals,
+    totalWeeks,
+    totalGoalsPerWeek, totalAssistsPerWeek,
+    totalPointsPerWeek, totalGoalsConcededPerWeek,
+    averageGoalsConceded: matches > 0 ? parseFloat((goalsConceded / matches).toFixed(2)) : 0,
+    averagePointsPerMatch: matches > 0 ? parseFloat((points / matches).toFixed(2)) : 0,
+    pointsPercentage: matches > 0 ? parseFloat(((points / (matches * 3)) * 100).toFixed(2)) : 0,
+    averagePointsPerWeek: totalWeeks > 0 ? parseFloat((totalPointsPerWeek / totalWeeks).toFixed(2)) : 0,
+    averageGoalsPerWeek: totalWeeks > 0 ? parseFloat((totalGoalsPerWeek / totalWeeks).toFixed(2)) : 0,
+    averageAssistsPerWeek: totalWeeks > 0 ? parseFloat((totalAssistsPerWeek / totalWeeks).toFixed(2)) : 0,
+    averageGoalsConcededPerWeek: totalWeeks > 0 ? parseFloat((totalGoalsConcededPerWeek / totalWeeks).toFixed(2)) : 0,
+    rankings: {}, // no cross-year rankings
+    pointsWithPlayers: mergedWith,
+    pointsAgainstPlayers: mergedAgainst,
+    worstPerformingTeammates: mergedWorst,
+  };
+
+  return docToOverviewStats(merged);
+}
+
+export async function recalculatePlayerStats(futId: string, year: number): Promise<number> {
+  const weeks = await getWeeksByDate(futId, String(year));
+  const { statsMap } = calculateAllPlayerStats(weeks);
+
+  const collection = db.collection('futs').doc(futId).collection('playerStats');
+
+  // Delete existing docs for this year
+  const existingSnap = await collection.where('year', '==', year).get();
+  if (!existingSnap.empty) {
+    const deleteBatch = db.batch();
+    existingSnap.docs.forEach((doc) => deleteBatch.delete(doc.ref));
+    await deleteBatch.commit();
+  }
+
+  // Write new docs in batches of 500
+  const entries = Object.entries(statsMap);
+  for (let i = 0; i < entries.length; i += 500) {
+    const batch = db.batch();
+    const chunk = entries.slice(i, i + 500);
+    for (const [playerId, ps] of chunk) {
+      const docId = `${playerId}__${year}`;
+      const ref = collection.doc(docId);
+      const data = internalStatsToDoc(playerId, ps, year);
+      batch.set(ref, data);
+    }
+    await batch.commit();
+  }
+
+  return entries.length;
+}
+
+export async function recalculateMonthAwards(futId: string, year: number, month: number): Promise<void> {
+  const monthStr = String(month).padStart(2, '0');
+  const weeks = await getWeeksByDate(futId, String(year), monthStr);
+
+  if (weeks.length === 0) return;
+
+  const resume = calculateMonthResume(weeks);
+
+  // Query monthPrizes for this month
+  const monthStart = new Date(year, month - 1, 1);
+  const monthEnd = new Date(year, month, 0, 23, 59, 59);
+  const prizesSnap = await db.collection('futs').doc(futId)
+    .collection('monthPrizes')
+    .where('date', '>=', Timestamp.fromDate(monthStart))
+    .where('date', '<=', Timestamp.fromDate(monthEnd))
+    .get();
+
+  if (prizesSnap.empty) return;
+
+  // Get player names and positions for lookup
+  const players = await getPlayers(futId);
+  const playerNameMap = new Map(players.map(p => [p.id, p.name]));
+
+  // Calculate best-of-position selection
+  const bestOfPos = calculateBestOfEachPosition(weeks);
+
+  // Build set of player names in the selection (2 per position, 1 for GOL)
+  const selectionNames = new Set<string>();
+  bestOfPos.attackers.slice(0, 2).forEach(p => selectionNames.add(p.name));
+  bestOfPos.midfielders.slice(0, 2).forEach(p => selectionNames.add(p.name));
+  bestOfPos.defenders.slice(0, 2).forEach(p => selectionNames.add(p.name));
+  bestOfPos.goalkeepers.slice(0, 1).forEach(p => selectionNames.add(p.name));
+
+  const batch = db.batch();
+  for (const prizeDoc of prizesSnap.docs) {
+    const data = prizeDoc.data();
+    const playerName = playerNameMap.get(data.playerId) || '';
+
+    const isMVP = resume.mvp[0]?.name === playerName;
+    const isTopPointer = resume.topPointer[0]?.name === playerName;
+    const isStriker = resume.scorer[0]?.name === playerName;
+    const isBestAssist = resume.assists[0]?.name === playerName;
+    const isBestDefender = resume.bestDefender[0]?.name === playerName;
+    const isLVP = resume.lvp[0]?.name === playerName;
+    const isBestOfPosition = selectionNames.has(playerName);
+
+    batch.update(prizeDoc.ref, {
+      isMVP, isTopPointer, isStriker, isBestAssist,
+      isBestDefender, isLVP, isBestOfPosition,
+    });
+  }
+  await batch.commit();
+}
+
+export async function getPlayerStatsDoc(futId: string, playerId: string, year: number): Promise<PlayerStatsDocument | null> {
+  const docId = `${playerId}__${year}`;
+  const doc = await db.collection('futs').doc(futId).collection('playerStats').doc(docId).get();
+  if (!doc.exists) return null;
+  return doc.data() as PlayerStatsDocument;
+}
+
+export async function getAllPlayerStatsDocs(futId: string, playerId: string): Promise<PlayerStatsDocument[]> {
+  const snap = await db.collection('futs').doc(futId)
+    .collection('playerStats')
+    .where('playerId', '==', playerId)
+    .get();
+  return snap.docs.map(d => d.data() as PlayerStatsDocument);
 }
 
 // ============================================================
@@ -1020,7 +1364,7 @@ export async function updateWeekAndMatches(
   const weekDoc = await weekRef.get();
   if (!weekDoc.exists) throw new Error('Semana não encontrada');
 
-  // Get existing teams
+  // Get existing teams and identify previous champions before any changes
   const existingTeamsSnap = await weekRef.collection('teams').get();
   if (teams.length !== existingTeamsSnap.size) {
     throw new Error(`Esperado ${existingTeamsSnap.size} times, recebido ${teams.length}. Não é permitido adicionar ou remover times.`);
@@ -1028,6 +1372,19 @@ export async function updateWeekAndMatches(
 
   const existingTeamIds = existingTeamsSnap.docs.map(d => d.id);
   const weekDate = new Date(date);
+
+  // Capture previous champion players and week date before update
+  const previousWeekData = weekDoc.data()!;
+  const previousWeekDate: Date = previousWeekData.date.toDate
+    ? previousWeekData.date.toDate()
+    : new Date(previousWeekData.date);
+  const previousChampionPlayerIds: string[] = [];
+  for (const teamDoc of existingTeamsSnap.docs) {
+    const teamData = teamDoc.data();
+    if (teamData.champion) {
+      previousChampionPlayerIds.push(...(teamData.playerIds || []));
+    }
+  }
 
   // Validate all players
   const allPlayerIds = [...new Set(teams.flat())];
@@ -1124,7 +1481,27 @@ export async function updateWeekAndMatches(
     }
     await champBatch.commit();
 
-    // Update month prizes
+    // Update month prizes — remove old champion dates, add new ones
+
+    // Remove championDate from previous champions who are no longer champions
+    const previousMonthKey = `${previousWeekDate.getFullYear()}_${String(previousWeekDate.getMonth() + 1).padStart(2, '0')}`;
+    const removedChampions = previousChampionPlayerIds.filter(pid => !championPlayerIds.includes(pid));
+
+    for (const pid of removedChampions) {
+      const prizeRef = futRef.collection('monthPrizes').doc(`${previousMonthKey}_${pid}`);
+      const prizeDoc = await prizeRef.get();
+      if (prizeDoc.exists) {
+        const existingDates: Timestamp[] = prizeDoc.data()!.championDates || [];
+        const filtered = existingDates.filter(d => d.toDate().getTime() !== previousWeekDate.getTime());
+        if (filtered.length === 0) {
+          await prizeRef.delete();
+        } else {
+          await prizeRef.update({ championTimes: filtered.length, championDates: filtered });
+        }
+      }
+    }
+
+    // Add/update championDate for current champions
     const monthKey = `${weekDate.getFullYear()}_${String(weekDate.getMonth() + 1).padStart(2, '0')}`;
     const monthStart = new Date(weekDate.getFullYear(), weekDate.getMonth(), 1);
 
@@ -1140,13 +1517,11 @@ export async function updateWeekAndMatches(
           championDates: [Timestamp.fromDate(new Date(date))],
         });
       } else {
-        // Remove old date for this week date range, then add new
+        // Remove old date for this week (exact match), then add new
         const existingDates: Timestamp[] = prizeDoc.data()!.championDates || [];
-        const filteredDates = existingDates.filter(d => {
-          const dt = d.toDate();
-          return dt < new Date(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate()) ||
-                 dt > new Date(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate() + 1);
-        });
+        const filteredDates = existingDates.filter(d =>
+          d.toDate().getTime() !== previousWeekDate.getTime()
+        );
         filteredDates.push(Timestamp.fromDate(new Date(date)));
         await prizeRef.update({
           championTimes: filteredDates.length,
@@ -1210,19 +1585,16 @@ export async function deleteWeekAndRelated(futId: string, weekId: string) {
 
       if (prizeDoc.exists) {
         const data = prizeDoc.data()!;
-        const newTimes = Math.max(0, (data.championTimes || 1) - 1);
+        const existingDates: Timestamp[] = data.championDates || [];
+        const filtered = existingDates.filter(d =>
+          d.toDate().getTime() !== weekDate.getTime()
+        );
 
-        if (newTimes === 0) {
+        if (filtered.length === 0) {
           await prizeRef.delete();
         } else {
-          // Remove the champion date for this week
-          const existingDates: Timestamp[] = data.championDates || [];
-          const filtered = existingDates.filter(d => {
-            const dt = d.toDate();
-            return dt.getTime() !== weekDate.getTime();
-          });
           await prizeRef.update({
-            championTimes: newTimes,
+            championTimes: filtered.length,
             championDates: filtered,
           });
         }
@@ -1464,4 +1836,194 @@ export async function getTeams(futId: string): Promise<TeamData[]> {
   }
 
   return allTeams;
+}
+
+// ============================================================
+// FINALIZE MONTH
+// ============================================================
+
+export interface FinalizeMonthAwards {
+  mvp: { playerId: string; playerName: string };
+  topPointer: { playerId: string; playerName: string };
+  scorer: { playerId: string; playerName: string };
+  assists: { playerId: string; playerName: string };
+  bestDefender: { playerId: string; playerName: string };
+  lvp: { playerId: string; playerName: string };
+}
+
+export interface FinalizeMonthTeam {
+  atackers: string[];
+  midfielders: string[];
+  defenders: string[];
+  goalkeepers: string[];
+}
+
+export async function isMonthFinalized(futId: string, year: number, month: number): Promise<boolean> {
+  const docId = `${year}-${String(month).padStart(2, '0')}`;
+  const doc = await db.collection('futs').doc(futId).collection('finalizedMonths').doc(docId).get();
+  return doc.exists;
+}
+
+export async function finalizeMonth(
+  futId: string,
+  year: number,
+  month: number,
+  awards: FinalizeMonthAwards,
+  teamOfTheMonth: FinalizeMonthTeam,
+  adminUid: string,
+): Promise<void> {
+  const docId = `${year}-${String(month).padStart(2, '0')}`;
+  const docRef = db.collection('futs').doc(futId).collection('finalizedMonths').doc(docId);
+
+  const existing = await docRef.get();
+  if (existing.exists) {
+    throw new Error('MONTH_ALREADY_FINALIZED');
+  }
+
+  // Save finalized month document
+  await docRef.set({
+    year,
+    month,
+    finalizedAt: Timestamp.now(),
+    finalizedBy: adminUid,
+    awards,
+    teamOfTheMonth,
+  });
+
+  // Update monthPrizes with admin selections
+  const monthStart = new Date(year, month - 1, 1);
+  const monthEnd = new Date(year, month, 0, 23, 59, 59);
+  const prizesSnap = await db.collection('futs').doc(futId)
+    .collection('monthPrizes')
+    .where('date', '>=', Timestamp.fromDate(monthStart))
+    .where('date', '<=', Timestamp.fromDate(monthEnd))
+    .get();
+
+  if (prizesSnap.empty) return;
+
+  const players = await getPlayers(futId);
+  const playerNameMap = new Map(players.map(p => [p.id, p.name]));
+
+  // Build set of team-of-month player names
+  const selectionNames = new Set<string>([
+    ...teamOfTheMonth.atackers,
+    ...teamOfTheMonth.midfielders,
+    ...teamOfTheMonth.defenders,
+    ...teamOfTheMonth.goalkeepers,
+  ]);
+
+  const batch = db.batch();
+  for (const prizeDoc of prizesSnap.docs) {
+    const data = prizeDoc.data();
+    const playerName = playerNameMap.get(data.playerId) || '';
+
+    batch.update(prizeDoc.ref, {
+      isMVP: awards.mvp.playerName === playerName,
+      isTopPointer: awards.topPointer.playerName === playerName,
+      isStriker: awards.scorer.playerName === playerName,
+      isBestAssist: awards.assists.playerName === playerName,
+      isBestDefender: awards.bestDefender.playerName === playerName,
+      isLVP: awards.lvp.playerName === playerName,
+      isBestOfPosition: selectionNames.has(playerName),
+    });
+  }
+  await batch.commit();
+}
+
+// ============================================================
+// FINALIZE YEAR
+// ============================================================
+
+export type FinalizeYearAwards = FinalizeMonthAwards;
+export type FinalizeYearTeam = FinalizeMonthTeam;
+
+export async function isYearFinalized(futId: string, year: number): Promise<boolean> {
+  const doc = await db.collection('futs').doc(futId).collection('yearPrizes').doc(String(year)).get();
+  return doc.exists;
+}
+
+export async function finalizeYear(
+  futId: string,
+  year: number,
+  awards: FinalizeYearAwards,
+  teamOfTheYear: FinalizeYearTeam,
+  adminUid: string,
+): Promise<void> {
+  const docRef = db.collection('futs').doc(futId).collection('yearPrizes').doc(String(year));
+
+  const existing = await docRef.get();
+  if (existing.exists) {
+    throw new Error('YEAR_ALREADY_FINALIZED');
+  }
+
+  // Get all monthPrizes for this year to calculate championOfTheWeek per player
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31, 23, 59, 59);
+  const monthPrizesSnap = await db.collection('futs').doc(futId)
+    .collection('monthPrizes')
+    .where('date', '>=', Timestamp.fromDate(yearStart))
+    .where('date', '<=', Timestamp.fromDate(yearEnd))
+    .get();
+
+  // Sum championTimes per player
+  const championTimesMap = new Map<string, number>();
+  for (const doc of monthPrizesSnap.docs) {
+    const data = doc.data();
+    const playerId = data.playerId as string;
+    const times = (data.championTimes as number) || 0;
+    championTimesMap.set(playerId, (championTimesMap.get(playerId) || 0) + times);
+  }
+
+  // Build set of team-of-year player names
+  const selectionNames = new Set<string>([
+    ...teamOfTheYear.atackers,
+    ...teamOfTheYear.midfielders,
+    ...teamOfTheYear.defenders,
+    ...teamOfTheYear.goalkeepers,
+  ]);
+
+  // Get all players to resolve names to IDs
+  const allPlayers = await getPlayers(futId);
+  const playerNameToId = new Map(allPlayers.map(p => [p.name, p.id]));
+
+  // Collect all unique player IDs that should appear in yearPrizes
+  const allPlayerIds = new Set<string>();
+  // From monthPrizes
+  for (const doc of monthPrizesSnap.docs) {
+    allPlayerIds.add(doc.data().playerId as string);
+  }
+  // From awards
+  Object.values(awards).forEach(a => { if (a.playerId) allPlayerIds.add(a.playerId); });
+  // From team selection
+  selectionNames.forEach(name => {
+    const id = playerNameToId.get(name);
+    if (id) allPlayerIds.add(id);
+  });
+
+  const playerIdToName = new Map(allPlayers.map(p => [p.id, p.name]));
+  const yearTimestamp = Timestamp.fromDate(new Date(year, 0, 1));
+
+  // Build players map
+  const playersMap: Record<string, unknown> = {};
+  for (const playerId of allPlayerIds) {
+    const playerName = playerIdToName.get(playerId) || '';
+    playersMap[playerId] = {
+      year: yearTimestamp,
+      championOfTheWeek: championTimesMap.get(playerId) || 0,
+      yearChampion: awards.mvp.playerId === playerId,
+      yearTopPointer: awards.topPointer.playerId === playerId,
+      yearStriker: awards.scorer.playerId === playerId,
+      yearBestAssist: awards.assists.playerId === playerId,
+      yearBestDefender: awards.bestDefender.playerId === playerId,
+      yearLVP: awards.lvp.playerId === playerId,
+      yearBestOfPosition: selectionNames.has(playerName),
+    };
+  }
+
+  await docRef.set({
+    year,
+    finalizedAt: Timestamp.now(),
+    finalizedBy: adminUid,
+    players: playersMap,
+  });
 }
