@@ -5,6 +5,8 @@ import { useFut } from '@/contexts/FutContext';
 import { useWeeks } from '@/services/weeks/useWeeks';
 import FutSelector from '@/components/FutSelector';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import LogoutIcon from '@mui/icons-material/Logout';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -19,15 +21,30 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TodayIcon from '@mui/icons-material/Today';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MenuExpansible, MenuExpansibleContent, MenuExpansibleItem } from '../MenuExpansible';
 
 export default function MainMenu() {
   const [open, setOpen] = useState(true);
+  const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { userRole } = useFut();
   const { weeks } = useWeeks();
+
+  useEffect(() => {
+    const stored = localStorage.getItem('pelego_theme');
+    const prefersDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setIsDark(prefersDark);
+    document.documentElement.classList.toggle('dark', prefersDark);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle('dark', next);
+    localStorage.setItem('pelego_theme', next ? 'dark' : 'light');
+  };
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
   const currentYear = new Date().getFullYear();
   const years = Array.from(new Set(weeks?.map((week) => new Date(week.date).getFullYear())));
@@ -42,7 +59,7 @@ export default function MainMenu() {
       open={open}
       onClick={() => setOpen(!open)}
       footer={
-        <div className="flex items-center gap-3">
+        <div className={`flex ${open ? 'items-center gap-3' : 'flex-col items-center gap-2'}`}>
           {user?.photoURL ? (
             <img
               src={user.photoURL}
@@ -57,12 +74,34 @@ export default function MainMenu() {
               </span>
             </div>
           )}
+          {!open && (
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md hover:bg-accent transition-colors"
+              title={isDark ? 'Modo claro' : 'Modo escuro'}>
+              {isDark ? (
+                <LightModeIcon className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <DarkModeIcon className="w-4 h-4 text-muted-foreground" />
+              )}
+            </button>
+          )}
           {open && (
             <>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user?.displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
+              <button
+                onClick={toggleTheme}
+                className="p-1.5 rounded-md hover:bg-accent transition-colors"
+                title={isDark ? 'Modo claro' : 'Modo escuro'}>
+                {isDark ? (
+                  <LightModeIcon className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <DarkModeIcon className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
               <button
                 onClick={signOut}
                 className="p-1.5 rounded-md hover:bg-accent transition-colors"

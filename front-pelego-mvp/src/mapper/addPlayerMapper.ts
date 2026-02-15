@@ -2,7 +2,7 @@ import { CreatePlayerDataRequested, PlayerGetOverallFormData, PlayerPosition } f
 import { calculateOverall } from '@/utils/calculateOverall';
 
 export const addPlayerMapper = (formData: PlayerGetOverallFormData): CreatePlayerDataRequested => {
-  const { name, overall, position, country } = formData;
+  const { name, overall, position, country, email } = formData;
 
   const player: CreatePlayerDataRequested = {
     name,
@@ -18,6 +18,7 @@ export const addPlayerMapper = (formData: PlayerGetOverallFormData): CreatePlaye
     position: position as PlayerPosition,
     country,
     isChampion: false,
+    email: email || undefined,
   };
 
   return player;

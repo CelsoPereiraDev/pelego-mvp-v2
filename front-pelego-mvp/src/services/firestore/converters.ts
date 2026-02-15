@@ -50,6 +50,7 @@ export function firestorePlayerToResponse(data: DocumentData, id: string): Playe
     image: data.image || undefined,
     position: (data.position || 'MEI') as PlayerPosition,
     isChampion: data.isChampion || false,
+    email: data.email || undefined,
   };
 }
 

@@ -3,7 +3,7 @@ import Select, { GroupBase, Props, StylesConfig } from 'react-select';
 const customStyles: StylesConfig = {
   control: (provided, state) => ({
     ...provided,
-    backgroundColor: 'hsl(224, 71%, 4%)',
+    backgroundColor: 'hsl(var(--background))',
     borderColor: state.isFocused ? 'hsl(var(--ring))' : 'hsl(var(--border))',
     color: 'hsl(var(--foreground))',
     boxShadow: state.isFocused ? `0 0 0 1px hsl(var(--ring))` : 'none',
@@ -13,15 +13,15 @@ const customStyles: StylesConfig = {
   }),
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isFocused ? 'hsl(var(--light-hover))' : 'hsl(var(--background))',
+    backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--background))',
     color: 'hsl(var(--foreground))',
     '&:hover': {
-      backgroundColor: 'hsl(var(--light-hover))',
+      backgroundColor: 'hsl(var(--accent))',
     },
   }),
   singleValue: (provided) => ({
     ...provided,
-    color: 'hsl(var(--text-light-gray))',
+    color: 'hsl(var(--foreground))',
   }),
   menu: (provided) => ({
     ...provided,
@@ -29,7 +29,7 @@ const customStyles: StylesConfig = {
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: 'hsl(var(--placeholder))',
+    color: 'hsl(var(--muted-foreground))',
   }),
   indicatorSeparator: (provided) => ({
     ...provided,
@@ -37,20 +37,20 @@ const customStyles: StylesConfig = {
   }),
   multiValue: (provided) => ({
     ...provided,
-    backgroundColor: '#1F2937',
-    color: 'hsl(var(--text-light-gray))',
+    backgroundColor: 'hsl(var(--muted))',
+    color: 'hsl(var(--foreground))',
   }),
   multiValueLabel: (provided) => ({
     ...provided,
-    color: 'hsl(var(--text-light-gray))',
+    color: 'hsl(var(--foreground))',
     padding: '5px 3px 3px 6px',
   }),
   multiValueRemove: (provided) => ({
     ...provided,
-    color: 'hsl(var(--text-light-gray))',
+    color: 'hsl(var(--foreground))',
     '&:hover': {
-      backgroundColor: '#374151',
-      color: 'hsl(var(--text-light-gray))',
+      backgroundColor: 'hsl(var(--accent))',
+      color: 'hsl(var(--foreground))',
     },
   }),
 };

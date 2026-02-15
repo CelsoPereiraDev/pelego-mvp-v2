@@ -16,4 +16,5 @@ export const playerGetOverallSchema = z.object({
   image: z.string().optional(),
   position: z.enum(['MEI', 'ATK', 'DEF', 'GOL'], { message: 'Posição inválida' }),
   overall: playerOverallSchema,
+  email: z.string().email({ message: 'Email inválido' }).optional().or(z.literal('')),
 });
