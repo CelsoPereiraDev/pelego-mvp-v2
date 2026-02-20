@@ -7,14 +7,16 @@ import { WeekHeader } from '@/components/week/WeekHeader';
 import { TeamCard } from '@/components/week/TeamCard';
 import { StatCard } from '@/components/week/StatCard';
 import { MatchCard } from '@/components/match/MatchCard';
+import { MyWeekDialog } from '@/components/week/MyWeekDialog';
 import { useWeek } from '@/services/weeks/useWeek';
+import { useLinkedPlayerId } from '@/hooks/useLinkedPlayerId';
 import { MatchResponse } from '@/types/match';
 import Looks3OutlinedIcon from '@mui/icons-material/Looks3Outlined';
 import LooksOneIcon from '@mui/icons-material/LooksOne';
 import LooksTwoIcon from '@mui/icons-material/LooksTwo';
 import { format } from 'date-fns';
 import { useParams } from 'next/navigation';
-import React from 'react';
+import React, { useState } from 'react';
 
 type TeamIdToIndexMap = {
   [key: string]: number;
@@ -51,6 +53,8 @@ type TeamPointsMap = {
 const WeekDetails: React.FC = () => {
   const { weekId } = useParams();
   const { week, isLoading, isError } = useWeek(weekId as string);
+  const { linkedPlayerId } = useLinkedPlayerId();
+  const [myWeekOpen, setMyWeekOpen] = useState(false);
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {isError.message}</div>;
@@ -142,9 +146,25 @@ const WeekDetails: React.FC = () => {
   return (
     <div className="min-h-screen bg-background w-full flex justify-start flex-col p-4 md:p-8 lg:p-12 items-center">
       <div className="w-full max-w-7xl space-y-6">
-        <h1 className="text-3xl md:text-4xl text-center font-bold text-foreground mb-6">
-          Detalhes da Semana
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <h1 className="text-3xl md:text-4xl text-center font-bold text-foreground">
+            Detalhes da Semana
+          </h1>
+          <button
+            onClick={() => setMyWeekOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent whitespace-nowrap">
+            👤 Minha Semana
+          </button>
+        </div>
+
+        <MyWeekDialog
+          open={myWeekOpen}
+          onOpenChange={setMyWeekOpen}
+          week={week}
+          weekDate={formattedDate}
+          myPlayerId={linkedPlayerId}
+          weekId={weekId as string}
+        />
 
         <Card className="w-full p-4 md:p-6 rounded-lg">
           <WeekHeader date={formattedDate} weekId={weekId as string} />

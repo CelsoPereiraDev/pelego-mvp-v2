@@ -70,6 +70,7 @@ export const GoalEntryV2: React.FC<GoalEntryProps> = ({
                 setValue(`matches.${matchIndex}.${side}Goals.whoScores.${goalIndex}.goals`, 1);
               }}
               placeholder="Selecionar..."
+              isClearable={false}
             />
           )}
         />

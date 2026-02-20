@@ -12,8 +12,8 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth();
   const pathname = usePathname();
 
-  // Invite pages bypass sidebar and FutOnboarding
-  if (pathname.startsWith('/invite/')) {
+  // Invite pages and my-week preview pages bypass sidebar and FutOnboarding
+  if (pathname.startsWith('/invite/') || pathname.includes('/my-week/')) {
     return <>{children}</>;
   }
 

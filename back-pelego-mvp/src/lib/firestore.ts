@@ -1167,6 +1167,98 @@ function calculateTeamStats(createdTeamIds: string[], matchesData: { homeTeamId:
   return teamStats;
 }
 
+interface StreakEntry {
+  playerId: string;
+  streakCount: number;
+}
+
+interface FutStreaksDocument {
+  weekChampion: StreakEntry[];
+  weekStriker: StreakEntry[];
+  weekTopAssist: StreakEntry[];
+  monthChampion: StreakEntry | null;
+  monthStriker: StreakEntry | null;
+  monthTopAssist: StreakEntry | null;
+}
+
+const STREAKS_DOC_ID = 'current';
+
+async function calculateAndUpdateStreaks(
+  futId: string,
+  matches: MatchInput[],
+  teams: string[][],
+  createdTeamIds: string[],
+  championTeamId: string | null,
+): Promise<void> {
+  const streakDocRef = db.collection('futs').doc(futId).collection('streaks').doc(STREAKS_DOC_ID);
+
+  // 1. Calculate week highlights from match data
+  const goalsByPlayer: Map<string, number> = new Map();
+  const assistsByPlayer: Map<string, number> = new Map();
+
+  for (const match of matches) {
+    for (const goal of [...match.homeGoals, ...match.awayGoals]) {
+      if (goal.playerId) {
+        goalsByPlayer.set(goal.playerId, (goalsByPlayer.get(goal.playerId) ?? 0) + goal.goals);
+      }
+    }
+    for (const assist of [...match.homeAssists, ...match.awayAssists]) {
+      if (assist.playerId) {
+        assistsByPlayer.set(assist.playerId, (assistsByPlayer.get(assist.playerId) ?? 0) + assist.assists);
+      }
+    }
+  }
+
+  const maxGoals = goalsByPlayer.size > 0 ? Math.max(...goalsByPlayer.values()) : 0;
+  const maxAssists = assistsByPlayer.size > 0 ? Math.max(...assistsByPlayer.values()) : 0;
+
+  const topScorerIds = maxGoals > 0
+    ? [...goalsByPlayer.entries()].filter(([, g]) => g === maxGoals).map(([id]) => id)
+    : [];
+  const topAssistIds = maxAssists > 0
+    ? [...assistsByPlayer.entries()].filter(([, a]) => a === maxAssists).map(([id]) => id)
+    : [];
+
+  const championIndex = championTeamId ? createdTeamIds.indexOf(championTeamId) : -1;
+  const championPlayerIds = championIndex >= 0 ? teams[championIndex] : [];
+
+  // 2. Read current streaks document (1 read)
+  const streakSnap = await streakDocRef.get();
+  const existing = streakSnap.exists ? (streakSnap.data() as FutStreaksDocument) : null;
+
+  // Helper: look up previous streakCount for a player in an existing array
+  const prevCount = (arr: StreakEntry[] | undefined, playerId: string): number =>
+    arr?.find(e => e.playerId === playerId)?.streakCount ?? 0;
+
+  // 3. Build new arrays for each week category
+  const newWeekChampion: StreakEntry[] = championPlayerIds.map(playerId => ({
+    playerId,
+    streakCount: prevCount(existing?.weekChampion, playerId) + 1,
+  }));
+
+  const newWeekStriker: StreakEntry[] = topScorerIds.map(playerId => ({
+    playerId,
+    streakCount: prevCount(existing?.weekStriker, playerId) + 1,
+  }));
+
+  const newWeekTopAssist: StreakEntry[] = topAssistIds.map(playerId => ({
+    playerId,
+    streakCount: prevCount(existing?.weekTopAssist, playerId) + 1,
+  }));
+
+  // 4. Write the updated document (1 write), preserving month fields
+  const updatedDoc: FutStreaksDocument = {
+    weekChampion: newWeekChampion,
+    weekStriker: newWeekStriker,
+    weekTopAssist: newWeekTopAssist,
+    monthChampion: existing?.monthChampion ?? null,
+    monthStriker: existing?.monthStriker ?? null,
+    monthTopAssist: existing?.monthTopAssist ?? null,
+  };
+
+  await streakDocRef.set(updatedDoc);
+}
+
 export async function createWeekAndMatches(
   futId: string,
   date: string,
@@ -1312,6 +1404,11 @@ export async function createWeekAndMatches(
     });
   }
   await updateBatch.commit();
+
+  // Calculate and update player streaks (non-blocking, fire-and-forget errors are logged)
+  await calculateAndUpdateStreaks(futId, matches, teams, createdTeamIds, championTeamId).catch(err =>
+    console.error('Erro ao calcular streaks:', err),
+  );
 
   // Update player isChampion flags
   const allPlayersInWeek = teams.flat();
@@ -1968,6 +2065,32 @@ export async function finalizeMonth(
 
   // Update player documents with month award flags
   await applyMonthAwardsToPlayerDocs(futId, players, awards, selectionNames);
+
+  // Update month streak fields in the centralized streaks document
+  await updateMonthStreaks(futId, awards);
+}
+
+async function updateMonthStreaks(futId: string, awards: FinalizeMonthAwards): Promise<void> {
+  const streakDocRef = db.collection('futs').doc(futId).collection('streaks').doc(STREAKS_DOC_ID);
+  const streakSnap = await streakDocRef.get();
+  const existing = streakSnap.exists ? (streakSnap.data() as FutStreaksDocument) : null;
+
+  const buildMonthEntry = (
+    newPlayerId: string,
+    prev: StreakEntry | null | undefined,
+  ): StreakEntry => ({
+    playerId: newPlayerId,
+    streakCount: prev?.playerId === newPlayerId ? (prev.streakCount ?? 0) + 1 : 1,
+  });
+
+  await streakDocRef.set(
+    {
+      monthChampion: buildMonthEntry(awards.mvp.playerId, existing?.monthChampion),
+      monthStriker: buildMonthEntry(awards.scorer.playerId, existing?.monthStriker),
+      monthTopAssist: buildMonthEntry(awards.assists.playerId, existing?.monthTopAssist),
+    },
+    { merge: true },
+  );
 }
 
 async function applyMonthAwardsToPlayerDocs(

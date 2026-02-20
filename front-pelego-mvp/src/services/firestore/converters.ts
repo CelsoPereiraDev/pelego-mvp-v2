@@ -173,7 +173,7 @@ function buildMatchResponse(
           },
           isChampion: false,
         }
-      : ({} as PlayerResponse),
+      : undefined,
     goals: g.goals,
   }));
 

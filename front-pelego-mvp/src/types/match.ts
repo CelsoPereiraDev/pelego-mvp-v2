@@ -70,7 +70,7 @@ export interface GoalResponse {
   matchId: string;
   playerId: string;
   match: MatchResponse;
-  player: PlayerResponse;
+  player?: PlayerResponse;
   goals: number;
 }
 

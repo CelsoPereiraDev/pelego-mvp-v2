@@ -226,6 +226,7 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
           <ShareButton
             title={`Perfil de ${player.name}`}
             text={`Veja as stats de ${player.name} no Pelego MVP!`}
+            previewUrl={`/wrapped/${playerSlug}`}
           />
           <RoleGate allow={['admin', 'user']}>
             <Button variant="outline" size="sm" asChild>

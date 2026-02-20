@@ -10,12 +10,14 @@ interface ShareButtonProps {
   url?: string;
   targetRef?: RefObject<HTMLElement>;
   className?: string;
+  previewUrl?: string;
 }
 
-export function ShareButton({ title, text, url, targetRef, className }: ShareButtonProps) {
+export function ShareButton({ title, text, url, targetRef, className, previewUrl }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const isMobile = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
   const shareUrl = url ?? (typeof window !== 'undefined' ? window.location.href : '');
 
@@ -43,7 +45,7 @@ export function ShareButton({ title, text, url, targetRef, className }: ShareBut
   async function handleShare() {
     setLoading(true);
     try {
-      if (navigator.share) {
+      if (navigator.share && isMobile) {
         const shareData: ShareData = { title, text, url: shareUrl };
 
         if (targetRef?.current) {
@@ -76,12 +78,29 @@ export function ShareButton({ title, text, url, targetRef, className }: ShareBut
     }
   }
 
+  const sharedClassName = `inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent ${className ?? ''}`;
+
+  if (!isMobile && previewUrl) {
+    return (
+      <a
+        href={previewUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Ver e compartilhar"
+        className={sharedClassName}
+      >
+        <Share2 className="h-4 w-4" />
+        Compartilhar
+      </a>
+    );
+  }
+
   return (
     <button
       onClick={handleShare}
       disabled={loading}
       aria-label="Compartilhar"
-      className={`inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50 ${className ?? ''}`}
+      className={`${sharedClassName} disabled:opacity-50`}
     >
       {loading ? (
         <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

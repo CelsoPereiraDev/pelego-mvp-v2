@@ -2,13 +2,13 @@
 
 import { DatePickerWithShortcuts } from '@/components/DatePickerWithShortcuts';
 import { MatchCardV2 } from '@/components/MatchCard/MatchCardV2';
+import RoleGate from '@/components/RoleGate';
 import { TeamBuilder } from '@/components/TeamBuilder';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { WeekPreview } from '@/components/WeekPreview';
 import { useToast } from '@/hooks/use-toast';
 import { CreateMatchSchema } from '@/schema/match';
-import RoleGate from '@/components/RoleGate';
 import { useCreateWeekAndMatches } from '@/services/matchs/useCreateWeekAndMatches';
 import { usePlayers } from '@/services/player/usePlayers';
 import { CreateMatchForm } from '@/types/forms';
@@ -49,6 +49,7 @@ export default function NewMatchPageV2() {
     setValue,
     formState: { errors },
   } = form;
+    console.log("🆑 ~ NewMatchPageV2 ~ errors:", errors)
 
   const {
     fields: teamFields,

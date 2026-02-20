@@ -1,19 +1,11 @@
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { User } from 'firebase/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3334/api';
 
-function waitForAuth(): Promise<User | null> {
-  return new Promise((resolve) => {
-    if (auth.currentUser) {
-      resolve(auth.currentUser);
-      return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe();
-      resolve(user);
-    });
-  });
+async function waitForAuth(): Promise<User | null> {
+  await auth.authStateReady();
+  return auth.currentUser;
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
