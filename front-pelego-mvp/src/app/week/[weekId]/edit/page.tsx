@@ -28,7 +28,11 @@ export default function EditWeekPage() {
   const weekId = params?.weekId as string;
   const { toast } = useToast();
   const { players, isLoading: playersLoading } = usePlayers();
-  const { week, isLoading: weekLoading } = useWeek(weekId);
+  const playersMap = useMemo(
+    () => new Map((players ?? []).map((p) => [p.id, p])),
+    [players],
+  );
+  const { week, isLoading: weekLoading } = useWeek(weekId, playersMap);
   const { updateWeekWithMatches, isLoading: submitting } = useUpdateWeekAndMatches();
 
   const form = useForm<CreateMatchForm>({
@@ -180,10 +184,10 @@ export default function EditWeekPage() {
 
   return (
     <RoleGate
-      allow={['admin']}
+      allow={['admin', 'user']}
       fallback={
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
-          <p className="text-lg">Apenas administradores podem editar semanas.</p>
+          <p className="text-lg">Apenas membros e administradores podem editar semanas.</p>
         </div>
       }>
       <div className="container mx-auto py-8 px-4">

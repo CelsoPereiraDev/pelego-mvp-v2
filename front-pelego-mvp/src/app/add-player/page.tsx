@@ -31,10 +31,10 @@ export default function AddPlayersPage() {
 
   return (
     <RoleGate
-      allow={['admin']}
+      allow={['admin', 'user']}
       fallback={
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
-          <p className="text-lg">Apenas administradores podem adicionar jogadores.</p>
+          <p className="text-lg">Apenas membros e administradores podem adicionar jogadores.</p>
         </div>
       }>
       <div className="min-h-screen bg-[hsl(var(--background))] flex flex-col items-center p-8 gap-8">

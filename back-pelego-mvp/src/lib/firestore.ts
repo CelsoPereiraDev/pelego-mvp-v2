@@ -33,6 +33,7 @@ export interface FutData {
   createdAt: string;
   createdBy: string;
   memberCount: number;
+  years?: number[];
 }
 
 export async function createFut(name: string, description: string, userId: string, userEmail: string, userName: string): Promise<FutData> {
@@ -92,6 +93,7 @@ export async function getFut(futId: string): Promise<FutData | null> {
     createdAt: toDate(data.createdAt),
     createdBy: data.createdBy,
     memberCount: data.memberCount || 0,
+    years: data.years || [],
   };
 }
 
@@ -103,12 +105,8 @@ export async function getUserFuts(userId: string): Promise<FutData[]> {
 
   if (futIds.length === 0) return [];
 
-  const futs: FutData[] = [];
-  for (const futId of futIds) {
-    const fut = await getFut(futId);
-    if (fut) futs.push(fut);
-  }
-  return futs;
+  const results = await Promise.all(futIds.map(id => getFut(id)));
+  return results.filter(Boolean) as FutData[];
 }
 
 export async function getUserPrimaryFutId(userId: string): Promise<string | null> {
@@ -469,7 +467,7 @@ export async function getPlayerWithPrizes(futId: string, playerId: string) {
     monthIndividualPrizes: monthPrizesSnap.docs.map(d => ({ id: d.id, ...d.data() })),
     yearIndividualPrizes: yearPrizesSnap.docs
       .filter(d => d.data().players?.[playerId])
-      .map(d => ({ id: d.id, ...d.data().players[playerId] })),
+      .map(d => ({ id: d.id, ...d.data().players[playerId], year: d.id })),
   };
 }
 
@@ -478,7 +476,8 @@ export async function createPlayer(futId: string, playerData: Omit<PlayerData, '
   const ref = db.collection('futs').doc(futId).collection('players').doc(id);
 
   const dataToStore = {
-    ...playerData,
+    name: playerData.name,
+    position: playerData.position,
     overall: typeof playerData.overall === 'string' ? playerData.overall : JSON.stringify(playerData.overall),
     isChampion: playerData.isChampion ?? false,
     monthChampion: playerData.monthChampion ?? false,
@@ -488,6 +487,11 @@ export async function createPlayer(futId: string, playerData: Omit<PlayerData, '
     monthTopAssist: playerData.monthTopAssist ?? false,
     monthLVP: playerData.monthLVP ?? false,
     monthBestOfPosition: playerData.monthBestOfPosition ?? false,
+    ...(playerData.country != null && { country: playerData.country }),
+    ...(playerData.image != null && { image: playerData.image }),
+    ...(playerData.team != null && { team: playerData.team }),
+    ...(playerData.email != null && { email: playerData.email }),
+    ...(playerData.linkedUserId != null && { linkedUserId: playerData.linkedUserId }),
   };
 
   await ref.set(dataToStore);
@@ -589,84 +593,83 @@ export interface AssistData {
 }
 
 // Helper: get a week with full nested data (teams, matches, goals, assists, players)
-async function getWeekWithRelations(futId: string, weekId: string): Promise<WeekData | null> {
+async function getWeekWithRelations(
+  futId: string,
+  weekId: string,
+  playerMap?: Map<string, PlayerData>,
+): Promise<WeekData | null> {
   const weekRef = db.collection('futs').doc(futId).collection('weeks').doc(weekId);
   const weekDoc = await weekRef.get();
   if (!weekDoc.exists) return null;
 
   const weekData = weekDoc.data()!;
 
-  // Get all players for this fut (cache for lookups)
-  const allPlayers = await getPlayers(futId);
-  const playerMap = new Map(allPlayers.map(p => [p.id, p]));
+  // Load players only if no pre-built map was provided by the caller
+  if (!playerMap) {
+    const allPlayers = await getPlayers(futId);
+    playerMap = new Map(allPlayers.map(p => [p.id, p]));
+  }
 
-  // Get teams
-  const teamsSnap = await weekRef.collection('teams').get();
-  const teams: TeamData[] = [];
+  // Get teams and matches in parallel — matches fetched once per week, not per team
+  const [teamsSnap, matchesSnap] = await Promise.all([
+    weekRef.collection('teams').get(),
+    weekRef.collection('matches').get(),
+  ]);
 
-  for (const teamDoc of teamsSnap.docs) {
+  // Pre-build match list once
+  const allMatches: MatchData[] = matchesSnap.docs.map((matchDoc) => {
+    const matchData = matchDoc.data();
+    return {
+      id: matchDoc.id,
+      date: toDate(matchData.date),
+      homeTeamId: matchData.homeTeamId,
+      awayTeamId: matchData.awayTeamId,
+      orderIndex: matchData.orderIndex ?? null,
+      result: matchData.result ? {
+        id: matchDoc.id + '_result',
+        matchId: matchDoc.id,
+        homeGoals: matchData.result.homeGoals,
+        awayGoals: matchData.result.awayGoals,
+      } : null,
+      goals: (matchData.goals || []).map((g: any, i: number) => ({
+        id: `${matchDoc.id}_goal_${i}`,
+        matchId: matchDoc.id,
+        playerId: g.playerId || null,
+        ownGoalPlayerId: g.ownGoalPlayerId || null,
+        goals: g.goals,
+        player: g.playerId ? playerMap!.get(g.playerId) || null : null,
+        ownGoalPlayer: g.ownGoalPlayerId ? playerMap!.get(g.ownGoalPlayerId) || null : null,
+      })),
+      assists: (matchData.assists || []).map((a: any, i: number) => ({
+        id: `${matchDoc.id}_assist_${i}`,
+        matchId: matchDoc.id,
+        playerId: a.playerId,
+        assists: a.assists,
+        player: a.playerId ? playerMap!.get(a.playerId) || null : null,
+      })),
+    };
+  });
+
+  const teams: TeamData[] = teamsSnap.docs.map((teamDoc) => {
     const teamData = teamDoc.data();
-
-    // Build player references
     const playerIds: string[] = teamData.playerIds || [];
     const teamMembers: TeamMemberData[] = playerIds.map((pid: string) => ({
       id: `${teamDoc.id}_${pid}`,
       playerId: pid,
       teamId: teamDoc.id,
-      player: playerMap.get(pid) || { id: pid, name: 'Unknown', position: '', overall: {}, isChampion: false, monthChampion: false, monthStriker: false, monthBestDefender: false, monthTopPointer: false, monthTopAssist: false, monthLVP: false },
+      player: playerMap!.get(pid) || { id: pid, name: 'Unknown', position: '', overall: {}, isChampion: false, monthChampion: false, monthStriker: false, monthBestDefender: false, monthTopPointer: false, monthTopAssist: false, monthLVP: false },
     }));
 
-    // Get matches for this team
-    const matchesSnap = await weekRef.collection('matches').get();
-    const matchesHome: MatchData[] = [];
-    const matchesAway: MatchData[] = [];
-
-    for (const matchDoc of matchesSnap.docs) {
-      const matchData = matchDoc.data();
-      const match: MatchData = {
-        id: matchDoc.id,
-        date: toDate(matchData.date),
-        homeTeamId: matchData.homeTeamId,
-        awayTeamId: matchData.awayTeamId,
-        orderIndex: matchData.orderIndex ?? null,
-        result: matchData.result ? {
-          id: matchDoc.id + '_result',
-          matchId: matchDoc.id,
-          homeGoals: matchData.result.homeGoals,
-          awayGoals: matchData.result.awayGoals,
-        } : null,
-        goals: (matchData.goals || []).map((g: any, i: number) => ({
-          id: `${matchDoc.id}_goal_${i}`,
-          matchId: matchDoc.id,
-          playerId: g.playerId || null,
-          ownGoalPlayerId: g.ownGoalPlayerId || null,
-          goals: g.goals,
-          player: g.playerId ? playerMap.get(g.playerId) || null : null,
-          ownGoalPlayer: g.ownGoalPlayerId ? playerMap.get(g.ownGoalPlayerId) || null : null,
-        })),
-        assists: (matchData.assists || []).map((a: any, i: number) => ({
-          id: `${matchDoc.id}_assist_${i}`,
-          matchId: matchDoc.id,
-          playerId: a.playerId,
-          assists: a.assists,
-          player: a.playerId ? playerMap.get(a.playerId) || null : null,
-        })),
-      };
-
-      if (match.homeTeamId === teamDoc.id) matchesHome.push(match);
-      if (match.awayTeamId === teamDoc.id) matchesAway.push(match);
-    }
-
-    teams.push({
+    return {
       id: teamDoc.id,
       weekId: weekId,
       champion: teamData.champion || false,
       points: teamData.points || 0,
       players: teamMembers,
-      matchesHome,
-      matchesAway,
-    });
-  }
+      matchesHome: allMatches.filter(m => m.homeTeamId === teamDoc.id),
+      matchesAway: allMatches.filter(m => m.awayTeamId === teamDoc.id),
+    };
+  });
 
   return {
     id: weekId,
@@ -676,12 +679,15 @@ async function getWeekWithRelations(futId: string, weekId: string): Promise<Week
 }
 
 export async function getWeeks(futId: string): Promise<WeekData[]> {
-  const weeksSnap = await db.collection('futs').doc(futId).collection('weeks')
-    .orderBy('date', 'desc').get();
+  const [weeksSnap, allPlayers] = await Promise.all([
+    db.collection('futs').doc(futId).collection('weeks').orderBy('date', 'desc').get(),
+    getPlayers(futId),
+  ]);
+  const playerMap = new Map(allPlayers.map(p => [p.id, p]));
 
   const weeks: WeekData[] = [];
   for (const weekDoc of weeksSnap.docs) {
-    const week = await getWeekWithRelations(futId, weekDoc.id);
+    const week = await getWeekWithRelations(futId, weekDoc.id, playerMap);
     if (week) weeks.push(week);
   }
   return weeks;
@@ -695,31 +701,44 @@ export async function getWeeksByDate(futId: string, year: string, month?: string
   const startDate = new Date(`${year}-${month || '01'}-01`);
   const endDate = month ? new Date(`${year}-${month}-31`) : new Date(`${year}-12-31`);
 
-  const weeksSnap = await db.collection('futs').doc(futId).collection('weeks')
-    .where('date', '>=', Timestamp.fromDate(startDate))
-    .where('date', '<=', Timestamp.fromDate(endDate))
-    .orderBy('date', 'desc')
-    .get();
+  const [weeksSnap, allPlayers] = await Promise.all([
+    db.collection('futs').doc(futId).collection('weeks')
+      .where('date', '>=', Timestamp.fromDate(startDate))
+      .where('date', '<=', Timestamp.fromDate(endDate))
+      .orderBy('date', 'desc')
+      .get(),
+    getPlayers(futId),
+  ]);
+  const playerMap = new Map(allPlayers.map(p => [p.id, p]));
 
   const weeks: WeekData[] = [];
   for (const weekDoc of weeksSnap.docs) {
-    const week = await getWeekWithRelations(futId, weekDoc.id);
+    const week = await getWeekWithRelations(futId, weekDoc.id, playerMap);
     if (week) weeks.push(week);
   }
   return weeks;
 }
 
 export async function getAvailableYears(futId: string): Promise<number[]> {
-  const snap = await db.collection('futs').doc(futId).collection('weeks').get();
-  const years = new Set<number>();
-  snap.docs.forEach((doc) => {
-    const data = doc.data();
-    const date = data.date instanceof Timestamp
-      ? data.date.toDate()
-      : new Date(data.date);
-    years.add(date.getFullYear());
-  });
-  return Array.from(years).sort((a, b) => b - a);
+  const futDoc = await db.collection('futs').doc(futId).get();
+  if (!futDoc.exists) return [];
+  const years: number[] = futDoc.data()!.years || [];
+  // Fallback: if years not yet populated (legacy data), scan weeks once
+  if (years.length === 0) {
+    const snap = await db.collection('futs').doc(futId).collection('weeks').get();
+    const yearSet = new Set<number>();
+    snap.docs.forEach((doc) => {
+      const data = doc.data();
+      const date = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
+      yearSet.add(date.getFullYear());
+    });
+    const computed = Array.from(yearSet).sort((a, b) => b - a);
+    if (computed.length > 0) {
+      await db.collection('futs').doc(futId).update({ years: computed });
+    }
+    return computed;
+  }
+  return [...years].sort((a, b) => b - a);
 }
 
 // Lightweight: returns date (YYYY-MM-DD) → weekId map without loading subcollections
@@ -991,9 +1010,17 @@ export async function recalculateMonthAwards(futId: string, year: number, month:
 
   if (prizesSnap.empty) return;
 
-  // Get player names and positions for lookup
-  const players = await getPlayers(futId);
-  const playerNameMap = new Map(players.map(p => [p.id, p.name]));
+  // Build player name map from the already-loaded weeks data (no extra read needed)
+  const playerNameMap = new Map<string, string>();
+  for (const week of weeks) {
+    for (const team of week.teams) {
+      for (const member of team.players) {
+        if (member.player?.id && member.player.name) {
+          playerNameMap.set(member.player.id, member.player.name);
+        }
+      }
+    }
+  }
 
   // Calculate best-of-position selection
   const bestOfPos = calculateBestOfEachPosition(weeks);
@@ -1199,9 +1226,12 @@ export async function createWeekAndMatches(
   } else {
     // Create week
     weekId = generateId();
-    await futRef.collection('weeks').doc(weekId).set({
-      date: Timestamp.fromDate(new Date(date)),
-    });
+    await Promise.all([
+      futRef.collection('weeks').doc(weekId).set({
+        date: Timestamp.fromDate(new Date(date)),
+      }),
+      futRef.update({ years: FieldValue.arrayUnion(weekDate.getFullYear()) }),
+    ]);
 
     // Create teams
     const batch = db.batch();
@@ -1304,28 +1334,25 @@ export async function createWeekAndMatches(
     }
     await championBatch.commit();
 
-    // Update month prizes
+    // Update month prizes — upsert with set+merge (no read needed)
     const monthStart = new Date(weekDate.getFullYear(), weekDate.getMonth(), 1);
     const monthKey = `${weekDate.getFullYear()}_${String(weekDate.getMonth() + 1).padStart(2, '0')}`;
+    const prizeBatch = db.batch();
 
     for (const pid of championPlayerIds) {
       const prizeRef = futRef.collection('monthPrizes').doc(`${monthKey}_${pid}`);
-      const prizeDoc = await prizeRef.get();
-
-      if (!prizeDoc.exists) {
-        await prizeRef.set({
+      prizeBatch.set(
+        prizeRef,
+        {
           playerId: pid,
           date: Timestamp.fromDate(monthStart),
-          championTimes: 1,
-          championDates: [Timestamp.fromDate(new Date(date))],
-        });
-      } else {
-        await prizeRef.update({
           championTimes: FieldValue.increment(1),
           championDates: FieldValue.arrayUnion(Timestamp.fromDate(new Date(date))),
-        });
-      }
+        },
+        { merge: true },
+      );
     }
+    await prizeBatch.commit();
   }
 
   return {
@@ -1602,30 +1629,35 @@ export async function deleteWeekAndRelated(futId: string, weekId: string) {
     }
   }
 
-  // Check if players are champions in other weeks and reset if not
+  // Determine which players are still champions in other weeks via a single collectionGroup query
   const uniquePlayerIds = [...new Set(allPlayerIds)];
-  for (const pid of uniquePlayerIds) {
-    // Check other weeks for championship
-    const otherWeeksSnap = await futRef.collection('weeks').get();
-    let stillChampion = false;
+  if (uniquePlayerIds.length > 0) {
+    const otherChampionSnap = await db.collectionGroup('teams')
+      .where('champion', '==', true)
+      .get();
 
-    for (const otherWeekDoc of otherWeeksSnap.docs) {
-      if (otherWeekDoc.id === weekId) continue;
-      const otherTeamsSnap = await otherWeekDoc.ref.collection('teams')
-        .where('champion', '==', true).get();
-      for (const otherTeamDoc of otherTeamsSnap.docs) {
-        const otherTeamData = otherTeamDoc.data();
-        if ((otherTeamData.playerIds || []).includes(pid)) {
-          stillChampion = true;
-          break;
-        }
+    const stillChampionIds = new Set<string>();
+    for (const doc of otherChampionSnap.docs) {
+      // Ignore teams belonging to the week being deleted
+      if (doc.ref.parent.parent?.id === weekId) continue;
+      // Also ignore if not in this fut
+      const pathSegments = doc.ref.path.split('/');
+      const docFutId = pathSegments[1];
+      if (docFutId !== futId) continue;
+
+      const playerIds: string[] = doc.data().playerIds || [];
+      for (const pid of playerIds) {
+        if (uniquePlayerIds.includes(pid)) stillChampionIds.add(pid);
       }
-      if (stillChampion) break;
     }
 
-    if (!stillChampion) {
-      await futRef.collection('players').doc(pid).update({ isChampion: false });
+    const resetBatch = db.batch();
+    for (const pid of uniquePlayerIds) {
+      if (!stillChampionIds.has(pid)) {
+        resetBatch.update(futRef.collection('players').doc(pid), { isChampion: false });
+      }
     }
+    await resetBatch.commit();
   }
 
   // Delete matches
@@ -1645,6 +1677,14 @@ export async function deleteWeekAndRelated(futId: string, weekId: string) {
 
   // Delete week
   await weekRef.delete();
+
+  // Recalculate years on the fut document after deletion
+  const remainingWeeksSnap = await futRef.collection('weeks').get();
+  const remainingYears = [...new Set(remainingWeeksSnap.docs.map(d => {
+    const dt = d.data().date;
+    return (dt instanceof Timestamp ? dt.toDate() : new Date(dt)).getFullYear();
+  }))].sort((a, b) => b - a);
+  await futRef.update({ years: remainingYears });
 
   return {
     deletedWeekId: weekId,
@@ -1702,12 +1742,12 @@ export async function updateTeams(
   futId: string,
   teamsData: { id: string; champion: boolean; points: number; players: { id: string; isChampion: boolean }[]; weekId?: string }[]
 ): Promise<void> {
-  // Reset all player isChampion to false
-  const playersSnap = await db.collection('futs').doc(futId).collection('players').get();
+  // Reset isChampion only for players present in the provided teams (avoids loading the full collection)
+  const allPlayerIds = [...new Set(teamsData.flatMap(t => t.players.map(p => p.id)))];
   const resetBatch = db.batch();
-  playersSnap.docs.forEach(doc => {
-    resetBatch.update(doc.ref, { isChampion: false });
-  });
+  for (const pid of allPlayerIds) {
+    resetBatch.update(db.collection('futs').doc(futId).collection('players').doc(pid), { isChampion: false });
+  }
   await resetBatch.commit();
 
   // Update each team and its players
@@ -1735,26 +1775,23 @@ export async function updateTeams(
     const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const monthKey = `${currentDate.getFullYear()}_${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
+    const prizeUpsertBatch = db.batch();
     for (const player of team.players) {
       if (player.isChampion) {
         const prizeRef = db.collection('futs').doc(futId).collection('monthPrizes').doc(`${monthKey}_${player.id}`);
-        const prizeDoc = await prizeRef.get();
-
-        if (!prizeDoc.exists) {
-          await prizeRef.set({
+        prizeUpsertBatch.set(
+          prizeRef,
+          {
             playerId: player.id,
             date: Timestamp.fromDate(monthStart),
-            championTimes: 1,
-            championDates: [Timestamp.fromDate(currentDate)],
-          });
-        } else {
-          await prizeRef.update({
             championTimes: FieldValue.increment(1),
             championDates: FieldValue.arrayUnion(Timestamp.fromDate(currentDate)),
-          });
-        }
+          },
+          { merge: true },
+        );
       }
     }
+    await prizeUpsertBatch.commit();
   }
 }
 
@@ -1899,8 +1936,6 @@ export async function finalizeMonth(
     .where('date', '<=', Timestamp.fromDate(monthEnd))
     .get();
 
-  if (prizesSnap.empty) return;
-
   const players = await getPlayers(futId);
   const playerNameMap = new Map(players.map(p => [p.id, p.name]));
 
@@ -1912,22 +1947,90 @@ export async function finalizeMonth(
     ...teamOfTheMonth.goalkeepers,
   ]);
 
-  const batch = db.batch();
-  for (const prizeDoc of prizesSnap.docs) {
-    const data = prizeDoc.data();
-    const playerName = playerNameMap.get(data.playerId) || '';
+  if (!prizesSnap.empty) {
+    const prizesBatch = db.batch();
+    for (const prizeDoc of prizesSnap.docs) {
+      const data = prizeDoc.data();
+      const playerName = playerNameMap.get(data.playerId) || '';
 
-    batch.update(prizeDoc.ref, {
-      isMVP: awards.mvp.playerName === playerName,
-      isTopPointer: awards.topPointer.playerName === playerName,
-      isStriker: awards.scorer.playerName === playerName,
-      isBestAssist: awards.assists.playerName === playerName,
-      isBestDefender: awards.bestDefender.playerName === playerName,
-      isLVP: awards.lvp.playerName === playerName,
-      isBestOfPosition: selectionNames.has(playerName),
-    });
+      prizesBatch.update(prizeDoc.ref, {
+        isMVP: awards.mvp.playerName === playerName,
+        isTopPointer: awards.topPointer.playerName === playerName,
+        isStriker: awards.scorer.playerName === playerName,
+        isBestAssist: awards.assists.playerName === playerName,
+        isBestDefender: awards.bestDefender.playerName === playerName,
+        isLVP: awards.lvp.playerName === playerName,
+        isBestOfPosition: selectionNames.has(playerName),
+      });
+    }
+    await prizesBatch.commit();
   }
-  await batch.commit();
+
+  // Update player documents with month award flags
+  await applyMonthAwardsToPlayerDocs(futId, players, awards, selectionNames);
+}
+
+async function applyMonthAwardsToPlayerDocs(
+  futId: string,
+  players: PlayerData[],
+  awards: FinalizeMonthAwards,
+  teamOfMonthNames: Set<string>,
+): Promise<void> {
+  const playersRef = db.collection('futs').doc(futId).collection('players');
+
+  // Process in batches of 500 (Firestore limit)
+  for (let i = 0; i < players.length; i += 500) {
+    const chunk = players.slice(i, i + 500);
+    const batch = db.batch();
+
+    for (const player of chunk) {
+      const ref = playersRef.doc(player.id);
+      batch.update(ref, {
+        monthChampion: player.id === awards.mvp.playerId,
+        monthTopPointer: player.id === awards.topPointer.playerId,
+        monthStriker: player.id === awards.scorer.playerId,
+        monthBestAssist: player.id === awards.assists.playerId,
+        monthBestDefender: player.id === awards.bestDefender.playerId,
+        monthLVP: player.id === awards.lvp.playerId,
+        monthBestOfPosition: teamOfMonthNames.has(player.name),
+      });
+    }
+
+    await batch.commit();
+  }
+}
+
+// ============================================================
+// REAPPLY MONTH AWARDS (retroactive migration)
+// ============================================================
+
+export async function reapplyFinalizedMonthAwards(
+  futId: string,
+  year: number,
+  month: number,
+): Promise<void> {
+  const docId = `${year}-${String(month).padStart(2, '0')}`;
+  const docSnap = await db.collection('futs').doc(futId).collection('finalizedMonths').doc(docId).get();
+
+  if (!docSnap.exists) {
+    throw new Error('MONTH_NOT_FINALIZED');
+  }
+
+  const { awards, teamOfTheMonth } = docSnap.data() as {
+    awards: FinalizeMonthAwards;
+    teamOfTheMonth: FinalizeMonthTeam;
+  };
+
+  const players = await getPlayers(futId);
+
+  const selectionNames = new Set<string>([
+    ...teamOfTheMonth.atackers,
+    ...teamOfTheMonth.midfielders,
+    ...teamOfTheMonth.defenders,
+    ...teamOfTheMonth.goalkeepers,
+  ]);
+
+  await applyMonthAwardsToPlayerDocs(futId, players, awards, selectionNames);
 }
 
 // ============================================================
@@ -2025,5 +2128,53 @@ export async function finalizeYear(
     finalizedAt: Timestamp.now(),
     finalizedBy: adminUid,
     players: playersMap,
+  });
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+export interface AuditLogData {
+  id: string;
+  action: string;
+  userId: string;
+  userName: string;
+  targetType: 'player' | 'week' | 'match' | 'team' | 'member' | 'stats';
+  targetId: string;
+  details?: Record<string, any>;
+  createdAt: string;
+}
+
+export async function createAuditLog(
+  futId: string,
+  log: Omit<AuditLogData, 'id' | 'createdAt'>
+): Promise<void> {
+  const id = generateId();
+  const ref = db.collection('futs').doc(futId).collection('logs').doc(id);
+  await ref.set({
+    ...log,
+    createdAt: Timestamp.fromDate(new Date()),
+  });
+}
+
+export async function getAuditLogs(futId: string, limit = 100): Promise<AuditLogData[]> {
+  const snap = await db.collection('futs').doc(futId)
+    .collection('logs')
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+  return snap.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      action: data.action,
+      userId: data.userId,
+      userName: data.userName,
+      targetType: data.targetType,
+      targetId: data.targetId,
+      details: data.details || {},
+      createdAt: toDate(data.createdAt),
+    };
   });
 }

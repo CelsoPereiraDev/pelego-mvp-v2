@@ -2,7 +2,6 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useFut } from '@/contexts/FutContext';
-import { useWeeks } from '@/services/weeks/useWeeks';
 import FutSelector from '@/components/FutSelector';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
@@ -18,6 +17,7 @@ import LocalPoliceIcon from '@mui/icons-material/LocalPolice';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+import HistoryIcon from '@mui/icons-material/History';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TodayIcon from '@mui/icons-material/Today';
 import { usePathname } from 'next/navigation';
@@ -29,8 +29,7 @@ export default function MainMenu() {
   const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
   const { user, signOut } = useAuth();
-  const { userRole } = useFut();
-  const { weeks } = useWeeks();
+  const { userRole, futYears } = useFut();
 
   useEffect(() => {
     const stored = localStorage.getItem('pelego_theme');
@@ -47,7 +46,7 @@ export default function MainMenu() {
   };
   const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
   const currentYear = new Date().getFullYear();
-  const years = Array.from(new Set(weeks?.map((week) => new Date(week.date).getFullYear())));
+  const years = futYears;
 
   const isMonthlyActive = (basePath: string) => {
     const regex = new RegExp(`${basePath}/${currentYear}/\\d{2}$`);
@@ -124,7 +123,9 @@ export default function MainMenu() {
       }>
       <FutSelector collapsed={!open} />
       <MenuExpansibleContent>
-        <MenuExpansibleItem href="/" label="Home" icon={<HomeIcon />} active={pathname === '/'} />
+        {userRole !== 'viewer' && (
+          <MenuExpansibleItem href="/" label="Home" icon={<HomeIcon />} active={pathname === '/'} />
+        )}
         <MenuExpansibleItem
           href="/players"
           label="Jogadores"
@@ -265,6 +266,14 @@ export default function MainMenu() {
           icon={<EventAvailableIcon />}
           active={pathname === '/weeks'}
         />
+        {userRole !== 'viewer' && (
+          <MenuExpansibleItem
+            href="/logs"
+            label="Histórico"
+            icon={<HistoryIcon />}
+            active={pathname === '/logs'}
+          />
+        )}
         {userRole === 'admin' && (
           <MenuExpansibleItem
             href="/fut-settings"

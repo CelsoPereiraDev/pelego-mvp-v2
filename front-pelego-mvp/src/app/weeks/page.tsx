@@ -97,7 +97,7 @@ const WeeksList: React.FC = () => {
     <div className="min-h-screen bg-[hsl(var(--background))] w-full flex justify-start flex-col p-12 items-center gap-7">
       <h1 className="text-3xl text-center mb-9 text-[hsl(var(--foreground))]">Semanas</h1>
       <Card className="p-6 min-h-full rounded-lg overflow-auto min-w-[80%]">
-        <RoleGate allow={['admin']}>
+        <RoleGate allow={['admin', 'user']}>
           <div className="mb-8 w-full flex justify-end">
             <button
               className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] p-3 w-[200px] rounded flex flex-row gap-1 items-center justify-center"

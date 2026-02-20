@@ -30,6 +30,23 @@ function isAdmin(member: dal.MemberData): boolean {
   return member.role === 'admin';
 }
 
+// Helper to check admin or user role (excludes viewer)
+function isAdminOrUser(member: dal.MemberData): boolean {
+  return member.role === 'admin' || member.role === 'user';
+}
+
+// Helper to create fire-and-forget audit log
+function auditLog(futId: string, request: FastifyRequest, action: string, targetType: dal.AuditLogData['targetType'], targetId: string, details?: Record<string, any>) {
+  dal.createAuditLog(futId, {
+    action,
+    userId: request.user!.uid,
+    userName: request.user!.name || request.user!.email || 'Unknown',
+    targetType,
+    targetId,
+    details,
+  }).catch(err => console.error('Audit log failed:', err));
+}
+
 // Trigger write-time recalculation of player stats and month awards
 async function triggerStatsRecalculation(futId: string, weekDate: string) {
   try {
@@ -162,7 +179,9 @@ export async function scopedRoutes(app: FastifyInstance) {
           email: playerWithPrizes.email,
           isAuthenticated: !!playerWithPrizes.linkedUserId,
           monthIndividualPrizes: enrichedPrizes,
-          yearIndividualPrizes: playerWithPrizes.yearIndividualPrizes,
+          yearIndividualPrizes: year
+            ? playerWithPrizes.yearIndividualPrizes.filter((p: any) => p.year === year)
+            : playerWithPrizes.yearIndividualPrizes,
         },
         stats,
         availableYears,
@@ -182,8 +201,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem criar jogadores' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem criar jogadores' });
     }
 
     try {
@@ -233,6 +252,11 @@ export async function scopedRoutes(app: FastifyInstance) {
         }
       }
 
+      auditLog(request.params.futId, request, 'player_created', 'player', player.id, {
+        name: player.name,
+        position: player.position,
+        overall: typeof player.overall === 'object' && player.overall !== null ? player.overall?.overall : undefined,
+      });
       reply.status(201).send(player);
     } catch (error) {
       console.error('Erro ao criar jogador:', error);
@@ -247,8 +271,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem editar jogadores' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem editar jogadores' });
     }
 
     try {
@@ -280,6 +304,12 @@ export async function scopedRoutes(app: FastifyInstance) {
         }
       }
 
+      auditLog(request.params.futId, request, 'player_updated', 'player', request.params.id, {
+        playerName: player.name,
+        changes: Object.fromEntries(
+          Object.entries(request.body as Record<string, unknown>).filter(([k]) => k !== 'id')
+        ),
+      });
       reply.status(200).send(player);
     } catch (error) {
       console.error('Erro ao atualizar jogador:', error);
@@ -298,7 +328,12 @@ export async function scopedRoutes(app: FastifyInstance) {
     }
 
     try {
+      const playerToDelete = await dal.getPlayer(request.params.futId, request.params.id);
       await dal.deletePlayer(request.params.futId, request.params.id);
+      auditLog(request.params.futId, request, 'player_deleted', 'player', request.params.id, {
+        name: playerToDelete?.name,
+        position: playerToDelete?.position,
+      });
       reply.status(200).send({ message: 'Jogador deletado com sucesso' });
     } catch (error) {
       console.error('Erro ao deletar jogador:', error);
@@ -366,8 +401,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem criar semanas' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem criar semanas' });
     }
 
     const { date, teams, matches } = request.body;
@@ -383,6 +418,7 @@ export async function scopedRoutes(app: FastifyInstance) {
     try {
       const result = await dal.createWeekAndMatches(request.params.futId, date, teams, matches);
       triggerStatsRecalculation(request.params.futId, date);
+      auditLog(request.params.futId, request, 'week_created', 'week', result.week.id, { date, teamCount: result.teams.length, matchCount: result.matches.length });
       reply.status(201).send({
         message: 'Semana, times e partidas criados com sucesso',
         ...result,
@@ -402,8 +438,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem criar semanas' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem criar semanas' });
     }
 
     const { date, teams } = request.body;
@@ -412,6 +448,7 @@ export async function scopedRoutes(app: FastifyInstance) {
       // Create week and teams without matches
       const result = await dal.createWeekAndMatches(request.params.futId, date, teams, []);
       triggerStatsRecalculation(request.params.futId, date);
+      auditLog(request.params.futId, request, 'week_created', 'week', result.week.id, { date, teamCount: result.teams.length });
       reply.status(201).send(result);
     } catch (error) {
       console.error('Erro ao criar semana com times:', error);
@@ -426,8 +463,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem atualizar semanas' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem atualizar semanas' });
     }
 
     const { date, teams, matches } = request.body;
@@ -439,6 +476,7 @@ export async function scopedRoutes(app: FastifyInstance) {
     try {
       const result = await dal.updateWeekAndMatches(request.params.futId, request.params.weekId, date, teams, matches || []);
       triggerStatsRecalculation(request.params.futId, date);
+      auditLog(request.params.futId, request, 'week_updated', 'week', request.params.weekId, { date, matchCount: result.matches.length });
       reply.status(200).send({
         message: 'Semana atualizada com sucesso',
         ...result,
@@ -468,6 +506,10 @@ export async function scopedRoutes(app: FastifyInstance) {
       if (weekDate) {
         triggerStatsRecalculation(request.params.futId, weekDate);
       }
+      auditLog(request.params.futId, request, 'week_deleted', 'week', request.params.weekId, {
+        deletedWeekDate: result.deletedWeekDate,
+        totalPlayersAffected: result.totalPlayersAffected,
+      });
       reply.status(200).send({
         message: 'Semana deletada com sucesso. Todos os dados relacionados foram removidos.',
         ...result,
@@ -507,8 +549,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem adicionar gols' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem adicionar gols' });
     }
 
     const { weekId, matchId, goals } = request.body;
@@ -519,6 +561,7 @@ export async function scopedRoutes(app: FastifyInstance) {
       if (weekDate) {
         triggerStatsRecalculation(request.params.futId, weekDate);
       }
+      auditLog(request.params.futId, request, 'goals_registered', 'match', matchId, { weekId, goalsCount: goals.length });
       reply.status(201).send({ message: 'Gols criados com sucesso' });
     } catch (error) {
       console.error('Erro ao criar gols:', error);
@@ -553,8 +596,8 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem atualizar times' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem atualizar times' });
     }
 
     try {
@@ -568,6 +611,7 @@ export async function scopedRoutes(app: FastifyInstance) {
           triggerStatsRecalculation(request.params.futId, weekDate);
         }
       }
+      auditLog(request.params.futId, request, 'teams_updated', 'team', 'batch', { teamCount: teamsPayload.length });
       reply.status(200).send({ message: 'Times e prêmios mensais atualizados com sucesso' });
     } catch (error) {
       console.error('Erro ao atualizar times:', error);
@@ -644,26 +688,25 @@ export async function scopedRoutes(app: FastifyInstance) {
     }
 
     try {
-      const availableYears = await dal.getAvailableYears(request.params.futId);
-      let totalPlayers = 0;
-      let totalMonthsProcessed = 0;
+      const futId = request.params.futId;
+      const availableYears = await dal.getAvailableYears(futId);
+      const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-      for (const year of availableYears) {
-        const count = await dal.recalculatePlayerStats(request.params.futId, year);
-        totalPlayers += count;
-
-        // Recalculate month awards for each month in this year
-        for (let month = 1; month <= 12; month++) {
-          await dal.recalculateMonthAwards(request.params.futId, year, month);
-          totalMonthsProcessed++;
-        }
-      }
+      const results = await Promise.all(
+        availableYears.map(async (year) => {
+          const [count] = await Promise.all([
+            dal.recalculatePlayerStats(futId, year),
+            ...months.map((month) => dal.recalculateMonthAwards(futId, year, month)),
+          ]);
+          return count;
+        }),
+      );
 
       reply.status(200).send({
         message: 'Estatísticas reconstruídas com sucesso',
         years: availableYears,
-        totalPlayerStatsDocs: totalPlayers,
-        totalMonthsProcessed,
+        totalPlayerStatsDocs: results.reduce((sum, c) => sum + c, 0),
+        totalMonthsProcessed: availableYears.length * 12,
       });
     } catch (error) {
       console.error('Erro ao reconstruir estatísticas:', error);
@@ -702,6 +745,12 @@ export async function scopedRoutes(app: FastifyInstance) {
         request.user!.uid,
       );
 
+      auditLog(futId, request, 'month_finalized', 'stats', `${year}-${month}`, {
+        year: Number(year),
+        month: Number(month),
+        mvp: awards.mvp.playerName,
+        topScorer: awards.scorer.playerName,
+      });
       reply.status(200).send({ message: 'Mês finalizado com sucesso' });
     } catch (error) {
       if (error instanceof Error && error.message === 'MONTH_ALREADY_FINALIZED') {
@@ -727,6 +776,30 @@ export async function scopedRoutes(app: FastifyInstance) {
     } catch (error) {
       console.error('Erro ao verificar finalização:', error);
       reply.status(500).send({ error: 'Erro ao verificar finalização do mês' });
+    }
+  });
+
+  // POST /futs/:futId/admin/reapply-month-awards/:year/:month
+  app.post('/futs/:futId/admin/reapply-month-awards/:year/:month', async (request: FastifyRequest<{
+    Params: { futId: string; year: string; month: string };
+  }>, reply: FastifyReply) => {
+    const member = await verifyMembership(request, reply);
+    if (!member) return;
+    if (!isAdmin(member)) {
+      return reply.status(403).send({ error: 'Apenas administradores podem reaplicar prêmios' });
+    }
+
+    const { futId, year, month } = request.params;
+
+    try {
+      await dal.reapplyFinalizedMonthAwards(futId, Number(year), Number(month));
+      reply.status(200).send({ message: `Prêmios de ${month}/${year} reaplicados com sucesso` });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'MONTH_NOT_FINALIZED') {
+        return reply.status(404).send({ error: 'Este mês ainda não foi finalizado' });
+      }
+      console.error('Erro ao reaplicar prêmios do mês:', error);
+      reply.status(500).send({ error: 'Erro ao reaplicar prêmios do mês' });
     }
   });
 
@@ -760,6 +833,11 @@ export async function scopedRoutes(app: FastifyInstance) {
         request.user!.uid,
       );
 
+      auditLog(futId, request, 'year_finalized', 'stats', year, {
+        year: Number(year),
+        mvp: awards.mvp.playerName,
+        topScorer: awards.scorer.playerName,
+      });
       reply.status(200).send({ message: 'Ano finalizado com sucesso' });
     } catch (error) {
       if (error instanceof Error && error.message === 'YEAR_ALREADY_FINALIZED') {
@@ -799,16 +877,42 @@ export async function scopedRoutes(app: FastifyInstance) {
   }>, reply: FastifyReply) => {
     const member = await verifyMembership(request, reply);
     if (!member) return;
-    if (!isAdmin(member)) {
-      return reply.status(403).send({ error: 'Apenas administradores podem atualizar pontuações' });
+    if (!isAdminOrUser(member)) {
+      return reply.status(403).send({ error: 'Apenas membros e administradores podem atualizar pontuações' });
     }
 
     try {
       await dal.createPlayerScores(request.params.futId, request.body.scores);
+      auditLog(request.params.futId, request, 'scores_updated', 'stats', 'batch', { playerCount: request.body.scores.length });
       reply.status(200).send({ message: 'Pontuações atualizadas com sucesso' });
     } catch (error) {
       console.error('Erro ao atualizar pontuações:', error);
       reply.status(500).send({ error: 'Erro ao atualizar pontuações' });
+    }
+  });
+
+  // ============================================================
+  // AUDIT LOGS
+  // ============================================================
+
+  // GET /futs/:futId/logs
+  app.get('/futs/:futId/logs', async (request: FastifyRequest<{
+    Params: { futId: string };
+    Querystring: { limit?: string };
+  }>, reply: FastifyReply) => {
+    const member = await verifyMembership(request, reply);
+    if (!member) return;
+    if (member.role === 'viewer') {
+      return reply.status(403).send({ error: 'Acesso restrito' });
+    }
+
+    try {
+      const limit = request.query.limit ? parseInt(request.query.limit) : 100;
+      const logs = await dal.getAuditLogs(request.params.futId, limit);
+      reply.status(200).send(logs);
+    } catch (error) {
+      console.error('Erro ao buscar logs:', error);
+      reply.status(500).send({ error: 'Erro ao buscar logs' });
     }
   });
 }

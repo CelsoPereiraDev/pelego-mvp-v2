@@ -23,7 +23,7 @@ export function WeekHeader({ date, weekId }: WeekHeaderProps) {
         <p className="text-sm text-muted-foreground mb-1">Semana</p>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">Data: {date}</h1>
       </div>
-      <RoleGate allow={['admin']}>
+      <RoleGate allow={['admin', 'user']}>
         <Button
           variant="outline"
           onClick={handleEdit}

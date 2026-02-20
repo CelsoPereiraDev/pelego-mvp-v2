@@ -5,16 +5,26 @@ import SelectWithSearch from '@/components/SelectWithSearch';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useFut } from '@/contexts/FutContext';
 import { usePlayers } from '@/services/player/usePlayers';
 import { Player } from '@/types/player';
 import { Team } from '@/types/team';
 import { calculateTeamOverall, hillClimbing } from '@/utils/createTeam';
 import AutoModeIcon from '@mui/icons-material/AutoMode';
 import MultipleStopIcon from '@mui/icons-material/MultipleStop';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Select from 'react-select';
 
 export default function Home() {
+  const { userRole } = useFut();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (userRole === 'viewer') {
+      router.replace('/weeks');
+    }
+  }, [userRole, router]);
   const { players } = usePlayers();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);

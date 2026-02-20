@@ -178,10 +178,10 @@ export default function NewMatchPageV2() {
 
   return (
     <RoleGate
-      allow={['admin']}
+      allow={['admin', 'user']}
       fallback={
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-muted-foreground">
-          <p className="text-lg">Apenas administradores podem criar semanas e partidas.</p>
+          <p className="text-lg">Apenas membros e administradores podem criar semanas e partidas.</p>
         </div>
       }>
       <div className="container mx-auto py-8 px-4">
