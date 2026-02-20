@@ -1,4 +1,4 @@
-import { PlayerOverall, PlayerPosition, PlayerResponse } from '@/types/player';
+import { Player, PlayerOverall, PlayerPosition, PlayerResponse } from '@/types/player';
 import { WeekResponse } from '@/types/weeks';
 import {
   AssistResponse,
@@ -41,7 +41,29 @@ function parseOverall(overall: any): PlayerOverall {
 
 // ─── Player Converters ──────────────────────────────────────────
 
-export function firestorePlayerToResponse(data: DocumentData, id: string): PlayerResponse {
+export function firestorePlayerToResponse(data: DocumentData, id: string): Player {
+  return {
+    id,
+    name: data.name || '',
+    overall: parseOverall(data.overall),
+    country: data.country || undefined,
+    image: data.image || undefined,
+    team: data.team || undefined,
+    position: (data.position || 'MEI') as PlayerPosition,
+    isChampion: data.isChampion || false,
+    email: data.email || undefined,
+    monthChampion: data.monthChampion || false,
+    monthTopPointer: data.monthTopPointer || false,
+    monthStriker: data.monthStriker || false,
+    monthBestAssist: data.monthBestAssist || data.monthTopAssist || false,
+    monthBestDefender: data.monthBestDefender || false,
+    monthLVP: data.monthLVP || false,
+    monthBestOfPosition: data.monthBestOfPosition || false,
+  };
+}
+
+// Keep backward-compatible alias for code that expects PlayerResponse
+export function firestorePlayerToPlayerResponse(data: DocumentData, id: string): PlayerResponse {
   return {
     id,
     name: data.name || '',

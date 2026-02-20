@@ -36,7 +36,12 @@ const CreateWeekAndMatchesForm: React.FC = () => {
   const params = useParams();
   const paramWeekId = params.weekId;
 
-  const { week } = useWeek(paramWeekId as string);
+  const { players, isLoading } = usePlayers();
+  const playersMap = useMemo(
+    () => new Map((players ?? []).map((p) => [p.id, p])),
+    [players],
+  );
+  const { week } = useWeek(paramWeekId as string, playersMap);
 
   const defaultValues = useMemo(() => {
     return week
@@ -46,7 +51,7 @@ const CreateWeekAndMatchesForm: React.FC = () => {
           teams: [{ players: [] }, { players: [] }],
           matches: [],
         };
-  }, [week]);
+  }, [week, players]);
 
   const {
     handleSubmit,
@@ -75,7 +80,6 @@ const CreateWeekAndMatchesForm: React.FC = () => {
   const selectedPlayers = useWatch({ control, name: 'teams' }).flatMap(
     (team: { players: string[] }) => team.players,
   );
-  const { players, isLoading } = usePlayers();
   const {
     fields: teamFields,
     append: appendTeam,

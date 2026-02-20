@@ -56,7 +56,7 @@ export interface MonthIndividualPrizes {
 }
 
 export interface YearIndividualPrizes {
-  year: Date;
+  year: string;
   championOfTheWeek: number;
   yearBestOfPosition: boolean;
   yearLVP: boolean;

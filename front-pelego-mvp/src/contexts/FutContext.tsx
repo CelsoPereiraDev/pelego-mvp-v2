@@ -12,11 +12,13 @@ interface FutData {
   createdAt: string;
   createdBy: string;
   memberCount: number;
+  years?: number[];
 }
 
 interface FutContextType {
   futId: string | null;
   futName: string | null;
+  futYears: number[];
   userRole: 'admin' | 'user' | 'viewer' | null;
   futs: FutData[];
   loading: boolean;
@@ -38,6 +40,10 @@ export function FutProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<'admin' | 'user' | 'viewer' | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const futYears = futId
+    ? ([...(futs.find((f) => f.id === futId)?.years ?? [])].sort((a, b) => b - a))
+    : [];
 
   const loadFuts = useCallback(async () => {
     if (!user) {
@@ -156,6 +162,7 @@ export function FutProvider({ children }: { children: ReactNode }) {
       value={{
         futId,
         futName,
+        futYears,
         userRole,
         futs,
         loading,

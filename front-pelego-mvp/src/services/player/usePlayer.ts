@@ -1,6 +1,6 @@
 'use client';
 
-import { CreatePlayerDataRequested, PlayerResponse } from '@/types/player';
+import { CreatePlayerDataRequested, Player } from '@/types/player';
 import { useFut } from '@/contexts/FutContext';
 import { useFirestoreDocument } from '@/hooks/useFirestoreDocument';
 import { firestorePlayerToResponse } from '@/services/firestore/converters';
@@ -10,7 +10,7 @@ export function usePlayer(playerId: string) {
   const { futId } = useFut();
   const docPath = futId && playerId ? `futs/${futId}/players/${playerId}` : null;
 
-  const { data, loading, error } = useFirestoreDocument<PlayerResponse>(
+  const { data, loading, error } = useFirestoreDocument<Player>(
     docPath,
     firestorePlayerToResponse,
   );

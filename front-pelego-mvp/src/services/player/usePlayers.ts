@@ -1,6 +1,6 @@
 'use client';
 
-import { CreatePlayerDataRequested, PlayerResponse } from '@/types/player';
+import { CreatePlayerDataRequested, Player } from '@/types/player';
 import { useFut } from '@/contexts/FutContext';
 import { useFirestoreCollection } from '@/hooks/useFirestoreCollection';
 import { firestorePlayerToResponse } from '@/services/firestore/converters';
@@ -10,7 +10,7 @@ export function usePlayers() {
   const { futId } = useFut();
   const collectionPath = futId ? `futs/${futId}/players` : null;
 
-  const { data, loading, error } = useFirestoreCollection<PlayerResponse>(
+  const { data, loading, error } = useFirestoreCollection<Player>(
     collectionPath,
     firestorePlayerToResponse,
   );

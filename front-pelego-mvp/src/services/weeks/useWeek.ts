@@ -1,12 +1,12 @@
 'use client';
 
 import { WeekResponse } from '@/types/weeks';
-import { PlayerResponse } from '@/types/player';
+import { Player, PlayerResponse } from '@/types/player';
 import { useFut } from '@/contexts/FutContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, collection, onSnapshot, DocumentData } from 'firebase/firestore';
-import { buildWeekResponse } from '@/services/firestore/converters';
+import { buildWeekResponse, firestorePlayerToResponse } from '@/services/firestore/converters';
 import { deleteWeek } from './resources';
 
 interface SubcollectionDoc {
@@ -14,7 +14,7 @@ interface SubcollectionDoc {
   data: DocumentData;
 }
 
-export function useWeek(weekId: string) {
+export function useWeek(weekId: string, externalPlayersMap?: Map<string, PlayerResponse>) {
   const { futId } = useFut();
 
   const [week, setWeek] = useState<WeekResponse | null>(null);
@@ -37,11 +37,11 @@ export function useWeek(weekId: string) {
     let weekData: DocumentData | null = null;
     let teamsData: SubcollectionDoc[] = [];
     let matchesData: SubcollectionDoc[] = [];
-    let playersMap = new Map<string, PlayerResponse>();
+    let playersMap: Map<string, PlayerResponse> = externalPlayersMap ?? new Map<string, Player>();
     let weekReady = false;
     let teamsReady = false;
     let matchesReady = false;
-    let playersReady = false;
+    let playersReady = externalPlayersMap !== undefined; // skip wait if map provided externally
 
     function tryBuild() {
       if (!weekReady || !teamsReady || !matchesReady || !playersReady) return;
@@ -107,68 +107,35 @@ export function useWeek(weekId: string) {
       },
     );
 
-    // 4. Listen to players collection (for hydrating team members + goals/assists)
-    const unsubPlayers = onSnapshot(
-      collection(db, playersPath),
-      (snapshot) => {
-        const map = new Map<string, PlayerResponse>();
-        for (const d of snapshot.docs) {
-          const pd = d.data();
-          const overall =
-            typeof pd.overall === 'string'
-              ? (() => {
-                  try {
-                    return JSON.parse(pd.overall);
-                  } catch {
-                    return {
-                      pace: 0,
-                      shooting: 0,
-                      passing: 0,
-                      dribble: 0,
-                      defense: 0,
-                      physics: 0,
-                      overall: 0,
-                    };
-                  }
-                })()
-              : pd.overall || {
-                  pace: 0,
-                  shooting: 0,
-                  passing: 0,
-                  dribble: 0,
-                  defense: 0,
-                  physics: 0,
-                  overall: 0,
-                };
-
-          map.set(d.id, {
-            id: d.id,
-            name: pd.name || '',
-            overall,
-            country: pd.country || undefined,
-            image: pd.image || undefined,
-            position: pd.position || 'MEI',
-            isChampion: pd.isChampion || false,
-          });
-        }
-        playersMap = map;
-        playersReady = true;
-        tryBuild();
-      },
-      (err) => {
-        console.error(`Firestore players listener error:`, err);
-        setError(err);
-        setLoading(false);
-      },
-    );
+    // 4. Listen to players collection only when no external map was provided
+    let unsubPlayers: (() => void) | undefined;
+    if (!externalPlayersMap) {
+      unsubPlayers = onSnapshot(
+        collection(db, playersPath),
+        (snapshot) => {
+          const map = new Map<string, Player>();
+          for (const d of snapshot.docs) {
+            map.set(d.id, firestorePlayerToResponse(d.data(), d.id));
+          }
+          playersMap = map;
+          playersReady = true;
+          tryBuild();
+        },
+        (err) => {
+          console.error(`Firestore players listener error:`, err);
+          setError(err);
+          setLoading(false);
+        },
+      );
+    }
 
     return () => {
       unsubWeek();
       unsubTeams();
       unsubMatches();
-      unsubPlayers();
+      unsubPlayers?.();
     };
-  }, [futId, weekId]);
+  }, [futId, weekId, externalPlayersMap]);
 
   const del = async () => {
     if (!futId) throw new Error('No fut selected');
