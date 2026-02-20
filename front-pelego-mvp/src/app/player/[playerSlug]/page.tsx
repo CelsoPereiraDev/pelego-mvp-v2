@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ShareButton } from '@/components/ShareButton';
 
 interface PlayerProps {
   params: {
@@ -96,9 +97,8 @@ function countYearAward(prizes: YearIndividualPrizes[], key: keyof YearIndividua
   return prizes.filter((p) => p[key] === true).length;
 }
 
-function formatPrizeYear(dateStr: string | Date): string {
-  const date = new Date(dateStr);
-  return String(date.getFullYear());
+function formatPrizeYear(year: string): string {
+  return year;
 }
 
 export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
@@ -223,7 +223,11 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
               </option>
             ))}
           </select>
-          <RoleGate allow={['admin']}>
+          <ShareButton
+            title={`Perfil de ${player.name}`}
+            text={`Veja as stats de ${player.name} no Pelego MVP!`}
+          />
+          <RoleGate allow={['admin', 'user']}>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/edit-player/${player.id}`}>
                 <Pencil className="w-4 h-4 mr-1.5" />
@@ -499,7 +503,7 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
         const totalChampionOfWeek = yearPrizes.reduce((sum, p) => sum + (p.championOfTheWeek || 0), 0);
 
         const sortedYearPrizes = [...yearPrizes].sort(
-          (a, b) => new Date(b.year).getTime() - new Date(a.year).getTime(),
+          (a, b) => Number(b.year) - Number(a.year),
         );
 
         return (

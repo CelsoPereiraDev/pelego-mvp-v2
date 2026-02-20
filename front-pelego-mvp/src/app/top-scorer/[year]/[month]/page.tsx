@@ -1,5 +1,6 @@
 'use client';
 
+import { ShareButton } from '@/components/ShareButton';
 import { Button } from '@/components/ui/button';
 import { useWeeksByDate } from '@/services/weeks/useWeeksByDate';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -141,9 +142,15 @@ const TopScorersByDate: React.FC = () => {
         <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
           <ChevronLeftIcon className="h-4 w-4" />
         </Button>
-        <h1 className="text-3xl font-semibold mb-8 text-[hsl(var(--foreground))]">
-          Artilharia de {month ? `${mapMonthNumberToText(month)}` : `Ano ${year}`}
-        </h1>
+        <div className="flex flex-col items-center gap-3">
+          <h1 className="text-3xl font-semibold mb-2 text-[hsl(var(--foreground))]">
+            Artilharia de {month ? `${mapMonthNumberToText(month)}` : `Ano ${year}`}
+          </h1>
+          <ShareButton
+            title={`Artilharia de ${month ? mapMonthNumberToText(month) : `Ano ${year}`}`}
+            text={`Confira os artilheiros de ${month ? mapMonthNumberToText(month) : year} no Pelego MVP!`}
+          />
+        </div>
         <Button variant="outline" size="icon" onClick={goToNextMonth}>
           <ChevronRightIcon className="h-4 w-4" />
         </Button>

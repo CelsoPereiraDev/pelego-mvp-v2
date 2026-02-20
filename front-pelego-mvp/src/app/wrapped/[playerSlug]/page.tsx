@@ -1,8 +1,10 @@
 'use client';
 
+import { ShareButton } from '@/components/ShareButton';
 import { calculatePlayerStatsForPlayer } from '@/mapper/allPlayersStatsMapper';
 import { usePlayer } from '@/services/player/usePlayer';
 import { useWeeks } from '@/services/weeks/useWeeks';
+import { useRef } from 'react';
 
 interface PlayerProps {
   params: {
@@ -23,6 +25,7 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
   const { weeks } = useWeeks();
   const { player } = usePlayer(playerSlug);
   const playerStats = calculatePlayerStatsForPlayer(weeks, player?.id ?? '');
+  const shareRef = useRef<HTMLDivElement>(null);
 
   const renderPrimaryStats = (stats: typeof playerStats) => {
     if (!stats || !player) return null;
@@ -161,7 +164,7 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
       <h1 className="text-3xl sm:text-4xl text-center text-white font-extrabold mb-6">
         Sr. Caetano 2024
       </h1>
-      <div className="w-full max-w-md bg-black/30 rounded-xl p-6 shadow-lg">
+      <div ref={shareRef} className="w-full max-w-md bg-black/30 rounded-xl p-6 shadow-lg">
         <section className="mb-6">
           {/* <span className="text-xl">{player.name} - {translatePosition(player?.position)}</span> */}
           {renderPrimaryStats(playerStats)}
@@ -186,6 +189,13 @@ export default function PlayerPage({ params: { playerSlug } }: PlayerProps) {
               renderTop5List('De quem mais ganhei', playerStats.top5PointsGivenByPlayers)}
           </section>
         </div>
+      </div>
+      <div className="mt-6">
+        <ShareButton
+          targetRef={shareRef}
+          title="Meu Wrapped Pelego"
+          text={`Confira as stats de ${player?.name ?? 'jogador'} no Pelego MVP!`}
+        />
       </div>
     </div>
   );

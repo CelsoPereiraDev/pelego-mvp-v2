@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   title: 'Pelego MVP - Gestão Inteligente de Futebol',
   description:
     'Plataforma completa para gestão de estatísticas, times e premiações do seu futebol amador',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'Pelego MVP',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    apple: '/icons/icon-192.png',
+  },
 };
 
 export default function RootLayout({
@@ -25,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={otherFontFamily.variable} suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content="#16a34a" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('pelego_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
